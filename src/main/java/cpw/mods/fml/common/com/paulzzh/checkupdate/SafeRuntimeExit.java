@@ -16,7 +16,7 @@ public class SafeRuntimeExit {
     }
 
     private static void nest2(int code) {
-        Runtime.getRuntime()
-                .exit(code);
+        Runtime.getRuntime().exit(code);
+        throw new RuntimeException();
     }
 }

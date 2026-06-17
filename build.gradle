@@ -31,5 +31,6 @@ jar {
     manifest {
         attributes 'FMLCorePluginContainsFMLMod': true
         attributes 'FMLCorePlugin': 'com.paulzzh.checkupdate.CheckUpdate'
+        attributes 'Main-Class': 'com.paulzzh.checkupdate.Main'
     }
 }

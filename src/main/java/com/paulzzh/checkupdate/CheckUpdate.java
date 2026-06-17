@@ -3,17 +3,14 @@ package com.paulzzh.checkupdate;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
+import java.nio.channels.FileLock;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.Map;
 
-import static com.paulzzh.checkupdate.CheckUpdate.MOD_ID;
-import static com.paulzzh.checkupdate.CheckUpdate.MOD_PACKAGE;
-import static com.paulzzh.checkupdate.Utils.getPID;
+import static com.paulzzh.checkupdate.Utils.*;
 import static cpw.mods.fml.common.com.paulzzh.checkupdate.SafeRuntimeExit.exitRuntime;
 
 //lower 1.7.10
@@ -27,13 +24,18 @@ public class CheckUpdate implements
         cpw.mods.fml.relauncher.IFMLLoadingPlugin,
         //upper 1.8
         net.minecraftforge.fml.relauncher.IFMLLoadingPlugin {
-    public static final String MOD_ID = "checkupdate";
-    public static final String MOD_PACKAGE = "com.paulzzh.checkupdate.";
     private static final Logger LOGGER = LogManager.getLogger(CheckUpdate.class.getSimpleName());
-    private static final String JAR = "CheckUpdate.jar";
 
     static {
         try {
+            File file = new File(LOCK_FILE);
+            RandomAccessFile raf = new RandomAccessFile(file, "rw");
+            FileLock lock = raf.getChannel().tryLock();
+            if (lock == null || !lock.isValid()) {
+                LOGGER.fatal("Cannot get lock!");
+                exitRuntime(0);
+            }
+
             if (true) {
                 File checkUpdateJar = new File(JAR);
                 InputStream inputStream = CheckUpdate.class.getProtectionDomain().getCodeSource().getLocation().openStream();
@@ -42,15 +44,17 @@ public class CheckUpdate implements
                 }
 
                 File outputFile = new File("CheckUpdate.log");
-                String[] cmd = {checkUpdateJar.getAbsolutePath(), "--gui", "--pid", getPID()};
+                String[] cmd = {getJava(), "-jar", checkUpdateJar.getAbsolutePath()};
                 ProcessBuilder pb2 = new ProcessBuilder(cmd);
                 pb2.redirectOutput(outputFile);
                 pb2.redirectError(outputFile);
                 pb2.directory(Paths.get("").toAbsolutePath().toFile());
                 pb2.start();
-                LOGGER.fatal("Please update modpack");
+
+                LOGGER.fatal("Please update modpack!");
                 exitRuntime(0);
-                throw new RuntimeException();
+            } else {
+                lock.release();
             }
         } catch (IOException e) {
             throw new RuntimeException();
