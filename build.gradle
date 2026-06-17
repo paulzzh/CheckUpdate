@@ -1,12 +1,10 @@
 plugins {
     id 'java-library'
-    id 'eclipse'
-    id 'idea'
 }
 
 
 group = 'com.paulzzh'
-version = '1.0.6'
+version = '2.0.0'
 archivesBaseName = '!CheckUpdate'
 
 java.toolchain.languageVersion = JavaLanguageVersion.of(8)
