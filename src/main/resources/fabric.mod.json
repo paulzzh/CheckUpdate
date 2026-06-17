@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "id": "checkupdate",
+  "version": "1.0.6",
+  "name": "CheckUpdate",
+  "description": "",
+  "authors": [],
+  "contact": {
+    "repo": "https://github.com/Paulzzh/CheckUpdate"
+  },
+  "license": "MIT",
+  "icon": "assets/checkupdate/icon.png",
+  "environment": "client",
+  "entrypoints": {
+    "preLaunch": [
+      "com.paulzzh.checkupdate.CheckUpdateFabric"
+    ]
+  },
+  "depends": {
+    "fabricloader": "*",
+    "minecraft": "*"
+  }
+}

@@ -1,0 +1,16 @@
+[
+{
+  "modid": "checkupdate",
+  "name": "CheckUpdate",
+  "description": "CheckUpdate",
+  "version": "1.0.6",
+  "mcversion": "*",
+  "url": "https://github.com/Paulzzh/CheckUpdate",
+  "updateUrl": "",
+  "authorList": [],
+  "credits": "Mojang AB, and the Forge and FML guys.",
+  "logoFile": "assets/checkupdate/icon.png",
+  "screenshots": [],
+  "dependencies": []
+}
+]
