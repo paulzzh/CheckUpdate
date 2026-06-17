@@ -23,11 +23,12 @@ import java.util.Map;
  * enhance the classloading lifecycle for mods in FML
  *
  * @author cpw
+ *
  */
-public interface IFMLLoadingPlugin {
+public interface IFMLLoadingPlugin
+{
     /**
      * Return a list of classes that implements the IClassTransformer interface
-     *
      * @return a list of classes that implements the IClassTransformer interface
      */
     String[] getASMTransformerClass();
@@ -65,7 +66,6 @@ public interface IFMLLoadingPlugin {
     /**
      * Return an optional access transformer class for this coremod. It will be injected post-deobf
      * so ensure your ATs conform to the new srgnames scheme.
-     *
      * @return the name of an access transformer class or null if none is provided
      */
     String getAccessTransformerClass();
@@ -73,16 +73,18 @@ public interface IFMLLoadingPlugin {
     /**
      * Annotate your load plugin with a list of package prefixes that will *not* be
      * processed by the ASM transformation stack.
-     * <p>
+     *
      * Your plugin, and any transformers should *definitely* be in this list, because
      * otherwise you can face problems with the classloader trying to transform classes
      * with your transformer, whilst it is *loading* your transformer. Not pretty.
      *
      * @author cpw
+     *
      */
     @Retention(RetentionPolicy.RUNTIME)
     @Target(ElementType.TYPE)
-    public @interface TransformerExclusions {
+    public @interface TransformerExclusions
+    {
         public String[] value() default "";
     }
 
@@ -91,38 +93,43 @@ public interface IFMLLoadingPlugin {
      * minecraft is not this exact version.
      *
      * @author cpw
+     *
      */
     @Retention(RetentionPolicy.RUNTIME)
     @Target(ElementType.TYPE)
-    public @interface MCVersion {
+    public @interface MCVersion
+    {
         public String value() default "";
     }
 
     /**
      * Name this coremod something other than the "short class name"
-     *
      * @author cpw
+     *
      */
     @Retention(RetentionPolicy.RUNTIME)
     @Target(ElementType.TYPE)
-    public @interface Name {
+    public @interface Name
+    {
         public String value() default "";
     }
 
     @Retention(RetentionPolicy.RUNTIME)
     @Target(ElementType.TYPE)
-    public @interface DependsOn {
+    public @interface DependsOn
+    {
         public String[] value() default {};
     }
 
     /**
      * A simple sorting index, interleaved with other tweakers from other sources, as well as FML
-     *
      * @author cpw
+     *
      */
     @Retention(RetentionPolicy.RUNTIME)
     @Target(ElementType.TYPE)
-    public @interface SortingIndex {
+    public @interface SortingIndex
+    {
         public int value() default 0;
     }
 

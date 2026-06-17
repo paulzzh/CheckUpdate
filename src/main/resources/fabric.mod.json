@@ -8,7 +8,7 @@
   "contact": {
     "repo": "https://github.com/Paulzzh/CheckUpdate"
   },
-  "license": "MIT",
+  "license": "GPL-3.0-or-later",
   "icon": "assets/checkupdate/icon.png",
   "environment": "client",
   "entrypoints": {
