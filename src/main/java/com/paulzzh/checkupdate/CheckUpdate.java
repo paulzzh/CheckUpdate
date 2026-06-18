@@ -4,6 +4,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.*;
+import java.net.URISyntaxException;
 import java.nio.channels.FileLock;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -11,7 +12,6 @@ import java.nio.file.StandardCopyOption;
 import java.util.Map;
 
 import static com.paulzzh.checkupdate.Utils.*;
-import static cpw.mods.fml.common.com.paulzzh.checkupdate.SafeRuntimeExit.exitRuntime;
 
 //lower 1.7.10
 @cpw.mods.fml.relauncher.IFMLLoadingPlugin.Name(MOD_ID)
@@ -24,7 +24,7 @@ public class CheckUpdate implements
         cpw.mods.fml.relauncher.IFMLLoadingPlugin,
         //upper 1.8
         net.minecraftforge.fml.relauncher.IFMLLoadingPlugin {
-    private static final Logger LOGGER = LogManager.getLogger(CheckUpdate.class.getSimpleName());
+    private final static Logger LOGGER = LogManager.getLogger(CheckUpdate.class.getSimpleName());
 
     static {
         try {
@@ -33,31 +33,37 @@ public class CheckUpdate implements
             FileLock lock = raf.getChannel().tryLock();
             if (lock == null || !lock.isValid()) {
                 LOGGER.fatal("Cannot get lock!");
-                exitRuntime(0);
+                cpw.mods.fml.common.com.paulzzh.checkupdate.SafeRuntimeExit.exitRuntime(0);
             }
+            File checkUpdateJar = new File(JAR);
+            String jarPath = CheckUpdate.class.getProtectionDomain().getCodeSource().getLocation().toURI().getPath();
+            LOGGER.info("jar: "+jarPath);
+            Files.copy(new File(jarPath).toPath(), checkUpdateJar.toPath(), StandardCopyOption.REPLACE_EXISTING);
 
-            if (true) {
-                File checkUpdateJar = new File(JAR);
-                InputStream inputStream = CheckUpdate.class.getProtectionDomain().getCodeSource().getLocation().openStream();
-                if (inputStream != null) {
-                    Files.copy(inputStream, checkUpdateJar.toPath(), StandardCopyOption.REPLACE_EXISTING);
-                }
-
+            DownloadManager downloadManager = new DownloadManager(8, null);
+            Updater updater = new Updater(LOGGER::info, downloadManager);
+            if (updater.checkUpdate().restart) {
                 File outputFile = new File("CheckUpdate.log");
                 String[] cmd = {getJava(), "-jar", checkUpdateJar.getAbsolutePath()};
                 ProcessBuilder pb2 = new ProcessBuilder(cmd);
                 pb2.redirectOutput(outputFile);
                 pb2.redirectError(outputFile);
-                pb2.directory(Paths.get("").toAbsolutePath().toFile());
+                pb2.directory(new File(BASE));
                 pb2.start();
 
                 LOGGER.fatal("Please update modpack!");
-                exitRuntime(0);
+                cpw.mods.fml.common.com.paulzzh.checkupdate.SafeRuntimeExit.exitRuntime(0);
             } else {
-                lock.release();
+                updater = null;
+                downloadManager.shutdown();
+                downloadManager = null;
+                if (lock != null) {
+                    lock.release();
+                    raf.close();
+                }
             }
-        } catch (IOException e) {
-            throw new RuntimeException();
+        } catch (IOException | InterruptedException | URISyntaxException e) {
+            throw new RuntimeException(e);
         }
     }
 

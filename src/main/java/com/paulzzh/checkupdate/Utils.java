@@ -1,5 +1,7 @@
 package com.paulzzh.checkupdate;
 
+import com.google.gson.Gson;
+
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -7,14 +9,24 @@ import java.io.RandomAccessFile;
 import java.lang.management.ManagementFactory;
 import java.nio.channels.FileLock;
 import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.Comparator;
+import java.util.stream.Stream;
 
 public class Utils {
-    public static final String MOD_ID = "checkupdate";
-    public static final String MOD_PACKAGE = "com.paulzzh.checkupdate.";
-    public static final String LOCK_FILE = "checkupdate.lock";
-    public static final String JAR = "checkupdate.jar";
+    public final static String MOD_ID = "checkupdate";
+    public final static String MOD_PACKAGE = "com.paulzzh.checkupdate.";
+    public final static String LOCK_FILE = "CheckUpdate.lock";
+    public final static String JAR = "CheckUpdate.jar";
+    public final static String CONF = "CheckUpdate.config";
+    public final static String CACHE_DIR = "CheckUpdateCache";
+    public final static String BACKUP_DIR = "CheckUpdateBackup";
+    public final static String PUBLIC_KEY = "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAnTC/qb22DOTl4U0nAUEwl+8P8U84mlizZ7SHA9ldG3ShRoQEyc2cU0MbxIKZtIPL+sHrfCt+iypDFIHzhORw8Uo/U973yx4/jhgJmBjxLIUCcG8qjC431bMNEeZ/Pp5czHqYp1vQcU+eFfeaLZN4qN1GVtK4kz3GLFfAhyNsh8vZAl5LGV7B3h37ReGSIA8mXrcJCfAI6hdP8kEtViIbWG5d7cSn9Y05h6cHOrAYFw3Zozt4fsI9w7KsTecMfuHVEO+wmeZuN3yj32oWRygJR/xb0x+x7bFN9rgyMOGSr45eFtmjFEa5KSvdMDu2aetlIkYkW8c5BIgFSmxUODz93QIDAQAB";
+    public final static Gson GSON = new Gson();
+    public final static String BASE = Paths.get("").toAbsolutePath().normalize().toString();
 
     public static String bytesToHex(byte[] hash) {
         StringBuilder hexString = new StringBuilder(2 * hash.length);
@@ -40,5 +52,54 @@ public class Utils {
         String binaryName = System.getProperty("os.name").toLowerCase().contains("win") ? "javaw.exe" : "java";
         File javaExec = new File(new File(javaHome, "bin"), binaryName);
         return javaExec.getAbsolutePath();
+    }
+
+    public static boolean checkPath(String path) {
+        return Paths.get(path).toAbsolutePath().normalize().startsWith(BASE);
+    }
+
+    public static void rmdir(Path path) {
+        if (!Files.exists(path)) {
+            return;
+        }
+        try (Stream<Path> walk = Files.walk(path)) {
+            walk.sorted(Comparator.reverseOrder())
+                    .forEach(p -> {
+                        try {
+                            Files.delete(p);
+                        } catch (IOException e) {
+                            System.err.printf("Failed to delete %s: %s%n", p, e.getMessage());
+                        }
+                    });
+            System.out.println("Directory deleted successfully.");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static class VersionComparator implements Comparator<String> {
+
+        @Override
+        public int compare(String v1, String v2) {
+            if (v1 == null && v2 == null) return 0;
+            if (v1 == null) return -1;
+            if (v2 == null) return 1;
+
+            // Split versions into numeric parts
+            String[] parts1 = v1.split("\\.");
+            String[] parts2 = v2.split("\\.");
+
+            int maxLength = Math.max(parts1.length, parts2.length);
+            for (int i = 0; i < maxLength; i++) {
+                // Treat missing sub-version numbers as 0 (e.g., 1.2 vs 1.2.3)
+                int num1 = i < parts1.length ? Integer.parseInt(parts1[i]) : 0;
+                int num2 = i < parts2.length ? Integer.parseInt(parts2[i]) : 0;
+
+                if (num1 != num2) {
+                    return Integer.compare(num1, num2);
+                }
+            }
+            return 0;
+        }
     }
 }
