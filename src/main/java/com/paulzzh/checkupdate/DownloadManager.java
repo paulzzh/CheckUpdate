@@ -21,6 +21,7 @@ public class DownloadManager implements Closeable {
     private final ManagerCallback callback;
     private final Object finishLock = new Object();
     private int runningTasks = 0;
+
     public DownloadManager(int maxConcurrent, ManagerCallback callback) {
         this.semaphore = new Semaphore(maxConcurrent);
         this.executor = Executors.newFixedThreadPool(maxConcurrent);

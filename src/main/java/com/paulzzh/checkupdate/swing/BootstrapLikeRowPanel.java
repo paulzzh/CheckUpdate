@@ -57,6 +57,7 @@ public class BootstrapLikeRowPanel extends JPanel {
 
     private static JButton createOutlinedButton(String text) {
         JButton button = new JButton(text);
+        button.setEnabled(false);
         button.setFocusPainted(false);
         button.setContentAreaFilled(false);
         button.setOpaque(false);
@@ -90,6 +91,11 @@ public class BootstrapLikeRowPanel extends JPanel {
 
     public void setFixButtonAction(Runnable action) {
         fixButton.addActionListener(e -> action.run());
+    }
+
+    public void setEnable(boolean b) {
+        updateButton.setEnabled(b);
+        fixButton.setEnabled(b);
     }
 
     private static class TranslucentTextBox extends JPanel {
@@ -128,8 +134,8 @@ public class BootstrapLikeRowPanel extends JPanel {
     }
 
     private static class SquareIconView extends JComponent {
-        private ImageIcon icon;
         private final int baseSize = 80;
+        private ImageIcon icon;
 
         public void setIcon(ImageIcon icon) {
             this.icon = icon;

@@ -101,8 +101,18 @@ public class Updater {
 
     }
 
+    public void update(Result result, Runnable runnable) {
+        if (result.restart && !result.major) {
+            try {
+                update(result.version, result.filelist);
+            } catch (InterruptedException | IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
+        runnable.run();
+    }
+
     private void update(String version, Map<String, HashSizeTime> needUpdate) throws InterruptedException, IOException {
-        int total = needUpdate.size();
         String now = String.valueOf(Instant.now().getEpochSecond());
         needUpdate.entrySet().stream().filter((e) -> e.getValue().size > 0)
                 .forEach((e) -> cacheManager.getFile(e.getKey(), e.getValue()));
@@ -134,6 +144,11 @@ public class Updater {
         walkdir(Paths.get(CACHE_DIR, "dl"), Utils::deletefile);
     }
 
+    public void setZero() throws IOException {
+        config.version = "0.0";
+        Files.write(Paths.get(CONF), GSON.toJson(config).getBytes(StandardCharsets.UTF_8));
+    }
+
     public Result checkUpdate() throws InterruptedException, IOException {
         List<String> versions = info.versions.keySet().stream().sorted(new Utils.VersionComparator()).collect(Collectors.toList());
         LOGGER.info("ver: " + versions);
@@ -141,7 +156,7 @@ public class Updater {
 
         if (config.version.equals(latest)) {
             LOGGER.info("无更新。");
-            return new Result(false, false, config.version, null);
+            return new Result(false, false, config.version, new HashMap<>());
         }
 
         String[] parts = latest.split("\\.");
@@ -180,7 +195,7 @@ public class Updater {
                 LOGGER.info("检测到小版本更新");
                 update(latest, needUpdate);
                 LOGGER.info("热更新完毕");
-                return new Result(false, false, latest, null);
+                return new Result(false, false, latest, new HashMap<>());
             }
         }
         LOGGER.info("检测到大版本更新");

@@ -4,6 +4,8 @@ import com.google.gson.Gson;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -72,6 +74,33 @@ public class Utils {
             Files.delete(path);
         } catch (IOException e) {
             e.printStackTrace();
+        }
+    }
+
+    public static String formatBytesBinary(long bytes) {
+        if (bytes < 0) {
+            return "0 B";
+        }
+        if (bytes < 1024) {
+            return bytes + " B";
+        }
+        int unitIndex = (63 - Long.numberOfLeadingZeros(bytes)) / 10;
+        char prefix = "KMGTPE".charAt(unitIndex - 1);
+        return String.format("%.2f %ciB", bytes / Math.pow(1024, unitIndex), prefix);
+    }
+
+    public static void runAsync(Runnable runnable) {
+        new Thread(runnable).start();
+    }
+
+    public static String getStackTraceAsString(Throwable throwable) {
+        try (StringWriter sw = new StringWriter();
+             PrintWriter pw = new PrintWriter(sw)) {
+
+            throwable.printStackTrace(pw);
+            return sw.toString();
+        } catch (Exception e) {
+            return "Failed to extract stack trace";
         }
     }
 

@@ -3,6 +3,7 @@ package com.paulzzh.checkupdate.swing;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
+import java.lang.reflect.InvocationTargetException;
 
 import static com.paulzzh.checkupdate.Main.info;
 
@@ -23,8 +24,8 @@ public class MainWindow extends JFrame {
         setIconImage(new ImageIcon(MainWindow.class.getResource("/assets/checkupdate/icon.png")).getImage());
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setResizable(true);
-        setSize(800, 600);
-        setMinimumSize(new Dimension(800, 600));
+        setSize(800, 450);
+        setMinimumSize(new Dimension(800, 450));
 
         ImageBackgroundPanel background = new ImageBackgroundPanel(new ImageIcon("CheckUpdateCache/info/background.png").getImage());
         background.setLayout(new BorderLayout());
@@ -61,8 +62,8 @@ public class MainWindow extends JFrame {
         loadingPanel.add(label);
     }
 
-    public void showMainUI(ImageIcon icon, String name, String version, Image backgroundImage) {
-        SwingUtilities.invokeLater(() -> {
+    public void showMainUI(ImageIcon icon, String name, String version, Image backgroundImage) throws InterruptedException, InvocationTargetException {
+        SwingUtilities.invokeAndWait(() -> {
             setTitle(name + " -- 检查更新");
 
             if (getContentPane() instanceof ImageBackgroundPanel) {
