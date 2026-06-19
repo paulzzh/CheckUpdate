@@ -1,0 +1,101 @@
+package com.paulzzh.checkupdate.swing;
+
+import javax.swing.*;
+import javax.swing.border.EmptyBorder;
+import java.awt.*;
+
+public class MainWindow extends JFrame {
+    public static MainWindow INSTANCE;
+    private final CardLayout cardLayout = new CardLayout();
+    private final JPanel root = new JPanel(cardLayout);
+    private final JPanel loadingPanel = new JPanel(new GridBagLayout());
+    private final JPanel mainPanel = new JPanel(new BorderLayout());
+
+    private BootstrapLikeRowPanel head;
+    private DownloadTaskPanel foot;
+
+    public MainWindow() {
+        INSTANCE = this;
+        setTitle("少女祈祷中...");
+        setIconImage(new ImageIcon(MainWindow.class.getResource("/assets/checkupdate/icon.png")).getImage());
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setResizable(true);
+        setSize(800, 600);
+        setMinimumSize(new Dimension(800, 600));
+
+        ImageBackgroundPanel background = new ImageBackgroundPanel(new ImageIcon("CheckUpdateCache/info/background.png").getImage());
+        background.setLayout(new BorderLayout());
+
+        buildLoadingPanel();
+
+        root.setOpaque(false);
+        loadingPanel.setOpaque(false);
+        mainPanel.setOpaque(false);
+
+        root.add(loadingPanel, "少女祈祷中...");
+        root.add(mainPanel, "少女祈祷中...");
+
+        background.add(root, BorderLayout.CENTER);
+        setContentPane(background);
+
+        setLocationRelativeTo(null);
+        setVisible(true);
+
+        cardLayout.show(root, "少女祈祷中...");
+    }
+
+    private void buildLoadingPanel() {
+        JLabel label = new JLabel("少女祈祷中...");
+        label.setForeground(Color.WHITE);
+        label.setFont(label.getFont().deriveFont(Font.BOLD, 22f));
+        loadingPanel.add(label);
+    }
+
+    public void showMainUI(ImageIcon icon, String name, String version, Image backgroundImage) {
+        SwingUtilities.invokeLater(() -> {
+            setTitle(name + " -- 检查更新");
+
+            if (getContentPane() instanceof ImageBackgroundPanel) {
+                ImageBackgroundPanel bgPanel = (ImageBackgroundPanel) getContentPane();
+                bgPanel.setBackgroundImage(backgroundImage);
+                bgPanel.repaint();
+            }
+
+            head = new BootstrapLikeRowPanel(icon, name, version);
+            head.setBorder(new EmptyBorder(0, 20, 0, 20));
+
+            foot = new DownloadTaskPanel();
+            foot.setBorder(new EmptyBorder(0, 20, 20, 20));
+
+            JSplitPane split = new JSplitPane(JSplitPane.VERTICAL_SPLIT, wrap(head), wrap(foot));
+            split.setBorder(null);
+            split.setOpaque(false);
+            split.setContinuousLayout(true);
+            split.setResizeWeight(0.35);
+            split.setDividerSize(0);
+
+            mainPanel.removeAll();
+            mainPanel.add(split, BorderLayout.CENTER);
+            mainPanel.revalidate();
+            mainPanel.repaint();
+
+            cardLayout.show(root, "main");
+            SwingUtilities.invokeLater(() -> split.setDividerLocation(0.35));
+        });
+    }
+
+    public BootstrapLikeRowPanel getHead() {
+        return head;
+    }
+
+    public DownloadTaskPanel getFoot() {
+        return foot;
+    }
+
+    private static JPanel wrap(JComponent c) {
+        JPanel p = new JPanel(new BorderLayout());
+        p.setOpaque(false);
+        p.add(c, BorderLayout.CENTER);
+        return p;
+    }
+}
