@@ -21,10 +21,14 @@ import static com.paulzzh.checkupdate.Utils.bytesToHex;
 
 public class DownloadManager implements Closeable {
 
-    public interface DownloadCallback {
+    public interface ManagerCallback {
         void onSuccess(DownloadTask task);
         void onFailure(DownloadTask task, Exception e);
         void onProgress(DownloadTask task, long bytesRead, long totalBytes, double percent);
+    }
+
+    public interface DownloadCallback {
+        void onSuccess(DownloadTask task, String hash);
     }
 
     public static class DownloadTask {
@@ -34,23 +38,22 @@ public class DownloadManager implements Closeable {
         private final int maxRetries;
         private final int connectTimeoutMs;
         private final int readTimeoutMs;
+        private final DownloadCallback callback;
 
         public DownloadTask(String url,
                             File targetFile,
                             String hash,
                             int maxRetries,
                             int connectTimeoutMs,
-                            int readTimeoutMs) {
+                            int readTimeoutMs,
+                            DownloadCallback callback) {
             this.url = Objects.requireNonNull(url);
             this.targetFile = Objects.requireNonNull(targetFile);
             this.hash = hash;
             this.maxRetries = Math.max(0, maxRetries);
             this.connectTimeoutMs = connectTimeoutMs;
             this.readTimeoutMs = readTimeoutMs;
-        }
-
-        public DownloadTask(String url, File targetFile, String hash) {
-            this(url, targetFile, hash, 3, 10_000, 30_000);
+            this.callback = callback;
         }
 
         public String getUrl() { return url; }
@@ -62,12 +65,12 @@ public class DownloadManager implements Closeable {
 
     private final Semaphore semaphore;
     private final ExecutorService executor;
-    private final DownloadCallback callback;
+    private final ManagerCallback callback;
 
     private final Object finishLock = new Object();
     private int runningTasks = 0;
 
-    public DownloadManager(int maxConcurrent, DownloadCallback callback) {
+    public DownloadManager(int maxConcurrent, ManagerCallback callback) {
         this.semaphore = new Semaphore(maxConcurrent);
         this.executor = Executors.newFixedThreadPool(maxConcurrent);
         this.callback = callback;
@@ -82,13 +85,14 @@ public class DownloadManager implements Closeable {
 
         try {
             executor.execute(() -> {
+                String hash = null;
                 Exception lastError = null;
                 boolean success = false;
 
                 try {
                     for (int i = 0; i <= task.getMaxRetries(); i++) {
                         try {
-                            downloadOnce(task);
+                            hash = downloadOnce(task);
                             success = true;
                             break;
                         } catch (Exception e) {
@@ -110,12 +114,15 @@ public class DownloadManager implements Closeable {
                         }
                     }
                 }
+                if (success && task.callback != null) {
+                    task.callback.onSuccess(task, hash);
+                }
 
-                if (getCallback() != null) {
+                if (this.callback != null) {
                     if (success) {
-                        getCallback().onSuccess(task);
+                        this.callback.onSuccess(task);
                     } else {
-                        getCallback().onFailure(task, lastError);
+                        this.callback.onFailure(task, lastError);
                     }
                 }
             });
@@ -131,7 +138,7 @@ public class DownloadManager implements Closeable {
         }
     }
 
-    private void downloadOnce(DownloadTask task) throws IOException, NoSuchAlgorithmException {
+    private String downloadOnce(DownloadTask task) throws IOException, NoSuchAlgorithmException {
         URL url = new URL(task.getUrl());
         HttpURLConnection conn = (HttpURLConnection) url.openConnection();
         conn.setConnectTimeout(task.getConnectTimeoutMs());
@@ -142,6 +149,7 @@ public class DownloadManager implements Closeable {
 
         long total = conn.getContentLengthLong(); // 关键点
         MessageDigest digest = MessageDigest.getInstance("SHA-256");
+        String hash;
 
         try (InputStream in = new BufferedInputStream(conn.getInputStream());
              OutputStream out = new BufferedOutputStream(new FileOutputStream(tmp))) {
@@ -153,8 +161,8 @@ public class DownloadManager implements Closeable {
             long lastCallbackTime = 0;
 
             // 开始0%
-            if (getCallback() != null) {
-                getCallback().onProgress(task, read, total, 0.0);
+            if (this.callback != null) {
+                this.callback.onProgress(task, read, total, 0.0);
             }
 
             while ((len = in.read(buf)) != -1) {
@@ -162,35 +170,33 @@ public class DownloadManager implements Closeable {
                 digest.update(buf, 0, len);
                 read += len;
 
-                if (getCallback() != null) {
+                if (this.callback != null) {
                     long now = System.currentTimeMillis();
 
-                    // 限流：500ms一次
-                    if (now - lastCallbackTime >= 500) {
+                    // 限流：1000ms一次
+                    if (now - lastCallbackTime >= 1000) {
                         lastCallbackTime = now;
 
                         double percent = (total > 0) ? (read * 1.0 / total) : -1;
-                        getCallback().onProgress(task, read, total, percent);
+                        this.callback.onProgress(task, read, total, percent);
                     }
                 }
             }
 
-            if (!bytesToHex(digest.digest()).equals(task.hash)) {
+            hash = bytesToHex(digest.digest());
+            if (!hash.equals(task.hash)) {
                 throw new RuntimeException();
             }
 
             // 最后强制回调一次100%
-            if (getCallback() != null) {
+            if (this.callback != null) {
                 double percent = (total > 0) ? 1.0 : -1;
-                getCallback().onProgress(task, read, total, percent);
+                this.callback.onProgress(task, read, total, percent);
             }
         }
 
         Files.move(tmp.toPath(), target.toPath(), java.nio.file.StandardCopyOption.REPLACE_EXISTING);
-    }
-
-    private DownloadCallback getCallback() {
-        return callback;
+        return hash;
     }
 
     public void awaitAllFinished() throws InterruptedException {

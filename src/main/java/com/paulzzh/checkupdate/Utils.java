@@ -1,6 +1,7 @@
 package com.paulzzh.checkupdate;
 
 import com.google.gson.Gson;
+import com.paulzzh.checkupdate.gson.HashSizeTime;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -14,6 +15,7 @@ import java.nio.file.Paths;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Comparator;
+import java.util.function.Consumer;
 import java.util.stream.Stream;
 
 public class Utils {
@@ -58,20 +60,21 @@ public class Utils {
         return Paths.get(path).toAbsolutePath().normalize().startsWith(BASE);
     }
 
-    public static void rmdir(Path path) {
+    public static void walkdir(Path path, Consumer<Path> consumer) {
         if (!Files.exists(path)) {
             return;
         }
         try (Stream<Path> walk = Files.walk(path)) {
             walk.sorted(Comparator.reverseOrder())
-                    .forEach(p -> {
-                        try {
-                            Files.delete(p);
-                        } catch (IOException e) {
-                            System.err.printf("Failed to delete %s: %s%n", p, e.getMessage());
-                        }
-                    });
-            System.out.println("Directory deleted successfully.");
+                    .forEach(consumer);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static void deletefile(Path path) {
+        try {
+            Files.delete(path);
         } catch (IOException e) {
             e.printStackTrace();
         }

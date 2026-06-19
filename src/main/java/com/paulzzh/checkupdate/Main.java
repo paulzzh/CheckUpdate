@@ -49,30 +49,33 @@ public class Main {
 
     public static void main(String[] args) throws IOException, InterruptedException {
 
-        downloadManager = new DownloadManager(8, new DownloadManager.DownloadCallback() {
+        downloadManager = new DownloadManager(8, new DownloadManager.ManagerCallback() {
             @Override
             public void onSuccess(DownloadManager.DownloadTask task) {
+                info("下载完成 "+task.getTargetFile().getName());
                 removeTask(task); // 完成后直接清理
             }
 
             @Override
             public void onFailure(DownloadManager.DownloadTask task, Exception e) {
-                updateTask(task, "下载失败: " + e.getMessage(), -1);
+                info("下载失败 "+task.getTargetFile().getName()+" "+e.getMessage());
+                updateTask(task, "失败 "+e.getMessage(), -1);
             }
 
             @Override
             public void onProgress(DownloadManager.DownloadTask task, long bytesRead, long totalBytes, double percent) {
                 String status;
                 if (totalBytes > 0) {
-                    status = String.format("正在下载 %.2f%%", percent * 100);
+                    status = String.format("%.2f%%", percent * 100);
                 } else {
-                    status = "正在下载 " + bytesRead + " bytes";
+                    status = bytesRead + " bytes";
                 }
-                updateTask(task, status, percent);
+                info("正在下载 "+task.getTargetFile().getName()+" "+status);
+                updateTask(task, "正在下载 "+status, percent);
             }
         });
 
-        updater = new Updater(System.out::println, downloadManager);
+        updater = new Updater(Main::info, downloadManager);
         updater.checkUpdate();
 
         SwingUtilities.invokeLater(Main::initMainFrame);
@@ -219,5 +222,9 @@ public class Main {
                     return "";
             }
         }
+    }
+
+    public static void info(Object o) {
+        System.out.println(o);
     }
 }

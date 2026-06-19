@@ -112,7 +112,10 @@ public class Updater {
                     Files.move(file, backup, StandardCopyOption.REPLACE_EXISTING);
                 }
                 if (meta.size > 0) {
-                    Path dl = cacheManager.getFile(path, meta);
+                    Path dl = cacheManager.getFile(path, meta, false);
+                    if (dl == null) {
+                        throw new RuntimeException();
+                    }
                     LOGGER.info("安装文件: " + dl);
                     Files.move(dl, file, StandardCopyOption.REPLACE_EXISTING);
                 }
@@ -123,7 +126,7 @@ public class Updater {
         config.version = version;
         Files.write(Paths.get(CONF), GSON.toJson(config).getBytes(StandardCharsets.UTF_8));
 
-        rmdir(Paths.get(CACHE_DIR, "dl"));
+        walkdir(Paths.get(CACHE_DIR, "dl"), Utils::deletefile);
     }
 
     public Result checkUpdate() throws InterruptedException, IOException {
@@ -154,7 +157,7 @@ public class Updater {
                 if (checkPath(path)) {
                     Path file = Paths.get(path);
                     boolean exist = Files.exists(file);
-                    if ((!exist && meta.size != 0) || (exist && !meta.hash.equals(cacheManager.getGameCache().get(path).hash))) {
+                    if ((!exist && meta.size != 0) || (exist && !meta.hash.equals(cacheManager.getGameCache().get(file).hash))) {
                         needUpdate.put(path, meta);
                         if ("mods".equals(file.getName(0).toString())) {
                             modUpdate.set(true);
