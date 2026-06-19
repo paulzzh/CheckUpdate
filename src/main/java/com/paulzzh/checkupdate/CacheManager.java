@@ -87,7 +87,11 @@ public class CacheManager {
             walkdir(downloadBasePath, (path) -> {
                 if (Files.isRegularFile(path)) {
                     String file = path.toString().replace("\\", "/");
-                    downloadCache.put(file, makeCache(cacheOld, file));
+                    if (file.endsWith(".!part")) {
+                        LOGGER.info("skip: " + file);
+                    } else {
+                        downloadCache.put(file, makeCache(cacheOld, file));
+                    }
                 }
             });
             walkdir(infoBasePath, (path) -> {
@@ -149,7 +153,7 @@ public class CacheManager {
             }
             String url = config.host + "objects/" + meta.hash;
             downloadManager.submit(new DownloadManager.DownloadTask(url, path.toFile(), meta.hash,
-                    3, 10_000, 30_000,
+                    5, 5_000, 30_000,
                     (task, hash) -> makeDownloadCache(hash, path)));
 
             downloadManager.awaitAllFinished();
@@ -187,7 +191,7 @@ public class CacheManager {
             if (dl) {
                 String url = config.host + "objects/" + meta.hash;
                 downloadManager.submit(new DownloadManager.DownloadTask(url, path.toFile(), meta.hash,
-                        3, 10_000, 30_000,
+                        5, 5_000, 30_000,
                         (task, hash) -> makeDownloadCache(hash, path)));
             }
             return null;

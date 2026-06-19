@@ -38,10 +38,10 @@ public class Updater {
     private final Path icon;
     private final Path background;
 
-    public Updater(Logger logger, DownloadManager downloadManager) throws IOException, InterruptedException {
+    public Updater(Logger logger, DownloadManager.ManagerCallback callback) throws IOException, InterruptedException {
         this.LOGGER = logger;
-        this.downloadManager = downloadManager;
         this.config = readConfig();
+        this.downloadManager = new DownloadManager(config.thread, callback);
         this.info = readInfo();
         this.cacheManager = new CacheManager(config, info, downloadManager, logger);
 
@@ -102,14 +102,24 @@ public class Updater {
     }
 
     public void update(Result result, Runnable runnable) {
-        if (result.restart && !result.major) {
-            try {
-                update(result.version, result.filelist);
-            } catch (InterruptedException | IOException e) {
-                throw new RuntimeException(e);
+        try {
+            if (result.restart) {
+                if (result.major) {
+                    updateMajor(result.version, result.filelist);
+                } else {
+                    update(result.version, result.filelist);
+                }
             }
+        } catch (InterruptedException | IOException e) {
+            throw new RuntimeException(e);
+        } finally {
+            runnable.run();
         }
-        runnable.run();
+    }
+
+    private void updateMajor(String version, Map<String, HashSizeTime> needUpdate) {
+
+        walkdir(Paths.get(CACHE_DIR, "dl"), Utils::deletefile);
     }
 
     private void update(String version, Map<String, HashSizeTime> needUpdate) throws InterruptedException, IOException {
@@ -129,7 +139,7 @@ public class Updater {
                 if (meta.size > 0) {
                     Path dlPath = cacheManager.getFile(file, meta, false);
                     if (dlPath == null) {
-                        throw new RuntimeException();
+                        throw new RuntimeException("file not found");
                     }
                     LOGGER.info("安装文件: " + dlPath);
                     Files.move(dlPath, path, StandardCopyOption.REPLACE_EXISTING);

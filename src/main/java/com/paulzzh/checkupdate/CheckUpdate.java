@@ -41,8 +41,7 @@ public class CheckUpdate implements
             LOGGER.info("jar: " + jarPath);
             Files.copy(new File(jarPath).toPath(), checkUpdateJar.toPath(), StandardCopyOption.REPLACE_EXISTING);
 
-            DownloadManager downloadManager = new DownloadManager(8, null);
-            Updater updater = new Updater(LOGGER::info, downloadManager);
+            Updater updater = new Updater(LOGGER::info, null);
             if (updater.checkUpdate().restart) {
                 File outputFile = new File("CheckUpdate.log");
                 String[] cmd = {getJava(), "-jar", checkUpdateJar.getAbsolutePath()};
@@ -56,8 +55,6 @@ public class CheckUpdate implements
                 cpw.mods.fml.common.com.paulzzh.checkupdate.SafeRuntimeExit.exitRuntime(0);
             } else {
                 updater = null;
-                downloadManager.shutdown();
-                downloadManager = null;
                 if (lock != null) {
                     lock.release();
                     raf.close();

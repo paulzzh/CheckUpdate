@@ -11,6 +11,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.text.CharacterIterator;
+import java.text.StringCharacterIterator;
 import java.util.Comparator;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
@@ -77,16 +79,16 @@ public class Utils {
         }
     }
 
-    public static String formatBytesBinary(long bytes) {
-        if (bytes < 0) {
-            return "0 B";
+    public static String formatBytes(long bytes) {
+        if (-1000 < bytes && bytes < 1000) {
+            return bytes + "B";
         }
-        if (bytes < 1024) {
-            return bytes + " B";
+        CharacterIterator ci = new StringCharacterIterator("KMGTPE");
+        while (bytes <= -999_950 || bytes >= 999_950) {
+            bytes /= 1000;
+            ci.next();
         }
-        int unitIndex = (63 - Long.numberOfLeadingZeros(bytes)) / 10;
-        char prefix = "KMGTPE".charAt(unitIndex - 1);
-        return String.format("%.2f %ciB", bytes / Math.pow(1024, unitIndex), prefix);
+        return String.format("%.1f%cB", bytes / 1000.0, ci.current());
     }
 
     public static void runAsync(Runnable runnable) {

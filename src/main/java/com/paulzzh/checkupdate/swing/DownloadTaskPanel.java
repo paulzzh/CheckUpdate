@@ -15,17 +15,27 @@ import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class DownloadTaskPanel extends JPanel {
-    private static final Color PANEL_BG = new Color(255, 255, 255, 0);  // 外层：不透明，避免空白透出
+    private static final Color PANEL_BG = new Color(255, 255, 255, 0);  // 外层：透明
     private static final Color CELL_BG = new Color(255, 255, 255, 102);  // 单元格：40% 白底
-    private static final Color HEAD_BG = new Color(255, 255, 255, 160);   // 表头：略深一点
     private static final Color TEXT = Color.BLACK;
 
     private final Map<DownloadManager.DownloadTask, TaskRow> taskRowMap = new ConcurrentHashMap<>();
     private final TaskTableModel tableModel = new TaskTableModel();
-    private final JTable table = new JTable(tableModel);
+    private final JTable table = new JTable(tableModel) {
+        @Override
+        protected void paintComponent(Graphics g) {
+            Graphics2D g2 = (Graphics2D) g.create();
+            g2.setComposite(AlphaComposite.SrcOver);
+            g2.setColor(new Color(255, 255, 255, 102)); // 40% 白底
+            g2.fillRect(0, 0, getWidth(), getHeight());
+            g2.dispose();
+
+            super.paintComponent(g);
+        }
+    };
 
     public DownloadTaskPanel() {
-        setOpaque(true);
+        setOpaque(false);
         setBackground(PANEL_BG);
         setLayout(new BorderLayout());
 
@@ -52,10 +62,10 @@ public class DownloadTaskPanel extends JPanel {
 
         JScrollPane scrollPane = new JScrollPane(table);
         scrollPane.setBorder(BorderFactory.createEmptyBorder());
-        scrollPane.setOpaque(true);
+        scrollPane.setOpaque(false);
         scrollPane.setBackground(PANEL_BG);
 
-        scrollPane.getViewport().setOpaque(true);
+        scrollPane.getViewport().setOpaque(false);
         scrollPane.getViewport().setBackground(PANEL_BG);
 
         add(scrollPane, BorderLayout.CENTER);
@@ -104,7 +114,7 @@ public class DownloadTaskPanel extends JPanel {
         TaskRow row = taskRowMap.get(task);
         if (row != null) {
             row.finished = true;
-            updateTask(task, "已完成", 1.0);
+            updateTask(task, "完成", 1.0);
         }
     }
 
@@ -166,7 +176,7 @@ public class DownloadTaskPanel extends JPanel {
 
     private static class TaskRow {
         final DownloadManager.DownloadTask task;
-        volatile String status = "等待中";
+        volatile String status = "等待";
         volatile double percent = 0.0;
         volatile boolean finished = false;
         volatile Exception error = null;

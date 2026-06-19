@@ -11,4 +11,7 @@ public class Config {
 
     @SerializedName("host")
     public String host;
+
+    @SerializedName("thread")
+    public int thread;
 }

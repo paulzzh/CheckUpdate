@@ -23,9 +23,26 @@ public class DownloadManager implements Closeable {
     private int runningTasks = 0;
 
     public DownloadManager(int maxConcurrent, ManagerCallback callback) {
+        if (maxConcurrent < 1) {
+            maxConcurrent = 1;
+        }
         this.semaphore = new Semaphore(maxConcurrent);
         this.executor = Executors.newFixedThreadPool(maxConcurrent);
         this.callback = callback;
+    }
+
+    private static long parseTotalFromContentRange(String contentRange) {
+        if (contentRange == null) return -1L;
+        // 例：bytes 100-199/1000
+        int slash = contentRange.lastIndexOf('/');
+        if (slash < 0 || slash == contentRange.length() - 1) return -1L;
+        String totalStr = contentRange.substring(slash + 1).trim();
+        if ("*".equals(totalStr)) return -1L;
+        try {
+            return Long.parseLong(totalStr);
+        } catch (NumberFormatException e) {
+            return -1L;
+        }
     }
 
     public void submit(final DownloadTask task) throws InterruptedException {
@@ -37,6 +54,10 @@ public class DownloadManager implements Closeable {
 
         try {
             executor.execute(() -> {
+                if (this.callback != null) {
+                    this.callback.onAdd(task);
+                }
+
                 String hash = null;
                 Exception lastError = null;
                 boolean success = false;
@@ -67,7 +88,7 @@ public class DownloadManager implements Closeable {
 
                     if (this.callback != null) {
                         if (success) {
-                            this.callback.onSuccess(task);
+                            this.callback.onSuccess(task, hash);
                         } else {
                             this.callback.onFailure(task, lastError);
                         }
@@ -100,27 +121,44 @@ public class DownloadManager implements Closeable {
         HttpURLConnection conn = (HttpURLConnection) url.openConnection();
         conn.setConnectTimeout(task.getConnectTimeoutMs());
         conn.setReadTimeout(task.getReadTimeoutMs());
+        // 避免压缩导致 Range 字节偏移失真
+        conn.setRequestProperty("Accept-Encoding", "identity");
 
         File target = task.getTargetFile();
-        File tmp = new File(target.getAbsolutePath() + ".part");
+        File tmp = new File(target.getAbsolutePath() + ".!part");
 
-        long total = conn.getContentLengthLong(); // 关键点
+        long existing = tmp.exists() ? tmp.length() : 0L;
+        long total = 0;
+
+        // 如果已有临时文件，断点续传
+        if (existing > 0) {
+            conn.setRequestProperty("Range", "bytes=" + existing + "-");
+            total = parseTotalFromContentRange(conn.getHeaderField("Content-Range"));
+        } else {
+            total = conn.getContentLengthLong();
+        }
+
         MessageDigest digest = MessageDigest.getInstance("SHA-256");
-        String hash;
+
+        // 如果是续传，先把已有 part 的内容喂给 digest
+        if (existing > 0) {
+            try (InputStream seed = new BufferedInputStream(new FileInputStream(tmp))) {
+                byte[] buf = new byte[8192];
+                int len;
+                while ((len = seed.read(buf)) != -1) {
+                    digest.update(buf, 0, len);
+                }
+            }
+        }
+
+        long read = existing;
+        long lastCallbackTime = 0L;
 
         try (InputStream in = new BufferedInputStream(conn.getInputStream());
-             OutputStream out = new BufferedOutputStream(new FileOutputStream(tmp))) {
+             OutputStream out = new BufferedOutputStream(new FileOutputStream(tmp, existing > 0))) {
 
             byte[] buf = new byte[8192];
             int len;
-            long read = 0;
-
-            long lastCallbackTime = 0;
-
-            // 开始0%
-            if (this.callback != null) {
-                this.callback.onProgress(task, read, total, 0.0);
-            }
 
             while ((len = in.read(buf)) != -1) {
                 out.write(buf, 0, len);
@@ -129,27 +167,27 @@ public class DownloadManager implements Closeable {
 
                 if (this.callback != null) {
                     long now = System.currentTimeMillis();
-
-                    // 限流：1000ms一次
-                    if (now - lastCallbackTime >= 1000) {
+                    if (now - lastCallbackTime >= 500) {
                         lastCallbackTime = now;
-
                         double percent = (total > 0) ? (read * 1.0 / total) : -1;
                         this.callback.onProgress(task, read, total, percent);
                     }
                 }
             }
+        }
 
-            hash = bytesToHex(digest.digest());
-            if (!hash.equals(task.hash)) {
-                throw new RuntimeException();
+        String hash = bytesToHex(digest.digest());
+        if (!hash.equalsIgnoreCase(task.hash)) {
+            // 校验失败，删掉 part，避免下次继续续到错误内容上
+            if (tmp.exists() && !tmp.delete()) {
+                throw new IOException("下载校验失败，且无法删除临时文件: " + tmp.getAbsolutePath());
             }
+            throw new IOException("下载校验失败");
+        }
 
-            // 最后强制回调一次100%
-            if (this.callback != null) {
-                double percent = (total > 0) ? 1.0 : -1;
-                this.callback.onProgress(task, read, total, percent);
-            }
+        if (this.callback != null) {
+            double percent = (total > 0) ? 1.0 : -1;
+            this.callback.onProgress(task, read, total, percent);
         }
 
         Files.move(tmp.toPath(), target.toPath(), java.nio.file.StandardCopyOption.REPLACE_EXISTING);
@@ -174,7 +212,9 @@ public class DownloadManager implements Closeable {
     }
 
     public interface ManagerCallback {
-        void onSuccess(DownloadTask task);
+        void onAdd(DownloadTask task);
+
+        void onSuccess(DownloadTask task, String hash);
 
         void onFailure(DownloadTask task, Exception e);
 

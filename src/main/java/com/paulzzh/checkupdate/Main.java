@@ -25,13 +25,16 @@ public class Main {
     private final static DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HH:mm:ss.SSS");
     private static Updater updater;
 
-    public static void main(String[] args) throws IOException, InterruptedException, InvocationTargetException {
+    static {
         Thread.setDefaultUncaughtExceptionHandler((thread, throwable) -> {
             String msg = "Critical Error in thread: " + thread.getName() + "\n" + getStackTraceAsString(throwable);
             info(msg);
             JOptionPane.showMessageDialog(null, msg, "致命错误", JOptionPane.ERROR_MESSAGE);
+            System.exit(0);
         });
+    }
 
+    public static void main(String[] args) throws IOException, InterruptedException, InvocationTargetException {
         SwingUtilities.invokeAndWait(MainWindow::new);
         updater = getUpdater();
         MainWindow.INSTANCE.showMainUI(
@@ -96,7 +99,7 @@ public class Main {
 
         MainWindow.INSTANCE.getHead().setVersionText(updater.getConfig().version + " --> " + result.version);
         Object[] options = {"确定", "取消"};
-        int choice = JOptionPane.showOptionDialog(MainWindow.INSTANCE, "检测到小版本更新! " + result.version + "\n预计大小: " + formatBytesBinary(size) + "\n是否更新?",
+        int choice = JOptionPane.showOptionDialog(MainWindow.INSTANCE, "检测到小版本更新! " + result.version + "\n预计大小: " + formatBytes(size) + "\n是否更新?",
                 "更新", JOptionPane.YES_NO_OPTION, JOptionPane.INFORMATION_MESSAGE, null, options, options[0]);
         if (choice == JOptionPane.NO_OPTION) {
             MainWindow.INSTANCE.getHead().setEnable(true);
@@ -116,33 +119,34 @@ public class Main {
 
     @Nonnull
     private static Updater getUpdater() throws IOException, InterruptedException {
-        DownloadManager downloadManager = new DownloadManager(8, new DownloadManager.ManagerCallback() {
+        DownloadManager.ManagerCallback callback = new DownloadManager.ManagerCallback() {
             @Override
-            public void onSuccess(DownloadManager.DownloadTask task) {
-                //info("下载完成 "+task.getTargetFile().getName());
+            public void onAdd(DownloadManager.DownloadTask task) {
+                info("下载 " + task.getTargetFile().getName());
+                MainWindow.INSTANCE.getFoot().addTask(task);
+            }
+
+            @Override
+            public void onSuccess(DownloadManager.DownloadTask task, String hash) {
+                info("完成 " + task.getTargetFile().getName() + " " + hash);
                 MainWindow.INSTANCE.getFoot().removeTask(task); // 完成后直接清理
             }
 
             @Override
             public void onFailure(DownloadManager.DownloadTask task, Exception e) {
-                info("下载失败 " + task.getTargetFile().getName() + " " + e.getMessage());
+                info("失败 " + task.getTargetFile().getName() + " " + getStackTraceAsString(e));
                 MainWindow.INSTANCE.getFoot().updateTask(task, "失败 " + e.getMessage(), -1);
             }
 
             @Override
             public void onProgress(DownloadManager.DownloadTask task, long bytesRead, long totalBytes, double percent) {
-                String status;
-                if (totalBytes > 0) {
-                    status = String.format("%.2f%%", percent * 100);
-                } else {
-                    status = bytesRead + " bytes";
-                }
-                info("正在下载 " + task.getTargetFile().getName() + " " + status);
-                MainWindow.INSTANCE.getFoot().updateTask(task, "正在下载 " + status, percent);
+                String status = formatBytes(bytesRead) + " / " + formatBytes(totalBytes);
+                //info(status + " " + task.getTargetFile().getName());
+                MainWindow.INSTANCE.getFoot().updateTask(task, status, percent);
             }
-        });
+        };
 
-        return new Updater(Main::info, downloadManager);
+        return new Updater(Main::info, callback);
     }
 
     private static FileLock acquireLockWithRetry(FileChannel channel, int maxRetries, long sleepMillis) {
