@@ -93,7 +93,7 @@ public class DownloadTaskPanel extends JPanel {
         });
     }
 
-    public void updateTask(DownloadManager.DownloadTask task, String status, double percent) {
+    public void updateTask(DownloadManager.DownloadTask task, String status, String percent) {
         TaskRow row = taskRowMap.get(task);
         if (row == null) {
             addTask(task);
@@ -114,7 +114,7 @@ public class DownloadTaskPanel extends JPanel {
         TaskRow row = taskRowMap.get(task);
         if (row != null) {
             row.finished = true;
-            updateTask(task, "完成", 1.0);
+            updateTask(task, "完成", "fin");
         }
     }
 
@@ -177,7 +177,7 @@ public class DownloadTaskPanel extends JPanel {
     private static class TaskRow {
         final DownloadManager.DownloadTask task;
         volatile String status = "等待";
-        volatile double percent = 0.0;
+        volatile String percent = "0.0";
         volatile boolean finished = false;
         volatile Exception error = null;
 
@@ -235,7 +235,7 @@ public class DownloadTaskPanel extends JPanel {
                 case 1:
                     return row.status;
                 case 2:
-                    return row.percent >= 0 ? String.format("%.2f%%", row.percent * 100) : "未知";
+                    return row.percent;
                 default:
                     return "";
             }

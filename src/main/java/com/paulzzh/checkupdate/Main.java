@@ -135,14 +135,14 @@ public class Main {
             @Override
             public void onFailure(DownloadManager.DownloadTask task, Exception e) {
                 info("失败 " + task.getTargetFile().getName() + " " + getStackTraceAsString(e));
-                MainWindow.INSTANCE.getFoot().updateTask(task, "失败 " + e.getMessage(), -1);
+                MainWindow.INSTANCE.getFoot().updateTask(task, "失败 " + e.getMessage(), "Inf");
             }
 
             @Override
-            public void onProgress(DownloadManager.DownloadTask task, long bytesRead, long totalBytes, double percent) {
+            public void onProgress(DownloadManager.DownloadTask task, long bytesRead, long totalBytes, double percent, long eta) {
                 String status = formatBytes(bytesRead) + " / " + formatBytes(totalBytes);
                 //info(status + " " + task.getTargetFile().getName());
-                MainWindow.INSTANCE.getFoot().updateTask(task, status, percent);
+                MainWindow.INSTANCE.getFoot().updateTask(task, status, String.format("%.2f%% eta:", percent * 100) + formatSeconds(eta));
             }
         };
 

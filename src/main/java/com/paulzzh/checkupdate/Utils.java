@@ -91,6 +91,17 @@ public class Utils {
         return String.format("%.1f%cB", bytes / 1000.0, ci.current());
     }
 
+    public static String formatSeconds(long totalSeconds) {
+        if (totalSeconds > 43200) {
+            return ">12h";
+        }
+
+        long minutes = totalSeconds / 60;
+        long seconds = totalSeconds % 60;
+
+        return String.format("%d:%02d", minutes, seconds);
+    }
+
     public static void runAsync(Runnable runnable) {
         new Thread(runnable).start();
     }

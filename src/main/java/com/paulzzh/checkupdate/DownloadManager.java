@@ -153,6 +153,9 @@ public class DownloadManager implements Closeable {
 
         long read = existing;
         long lastCallbackTime = 0L;
+        long totalTimeMiles = 0L;
+        long totalRead = 0L;
+        int wait = 500;
 
         try (InputStream in = new BufferedInputStream(conn.getInputStream());
              OutputStream out = new BufferedOutputStream(new FileOutputStream(tmp, existing > 0))) {
@@ -164,13 +167,16 @@ public class DownloadManager implements Closeable {
                 out.write(buf, 0, len);
                 digest.update(buf, 0, len);
                 read += len;
+                totalRead += len;
 
                 if (this.callback != null) {
                     long now = System.currentTimeMillis();
-                    if (now - lastCallbackTime >= 500) {
+                    if (now - lastCallbackTime >= wait) {
+                        totalTimeMiles += wait;
                         lastCallbackTime = now;
                         double percent = (total > 0) ? (read * 1.0 / total) : -1;
-                        this.callback.onProgress(task, read, total, percent);
+                        long eta = (total > 0 && totalRead > 0) ? ((total - read) / (totalRead / totalTimeMiles) / 1000) : 3601;
+                        this.callback.onProgress(task, read, total, percent, eta);
                     }
                 }
             }
@@ -187,7 +193,7 @@ public class DownloadManager implements Closeable {
 
         if (this.callback != null) {
             double percent = (total > 0) ? 1.0 : -1;
-            this.callback.onProgress(task, read, total, percent);
+            this.callback.onProgress(task, read, total, percent, 0);
         }
 
         Files.move(tmp.toPath(), target.toPath(), java.nio.file.StandardCopyOption.REPLACE_EXISTING);
@@ -218,7 +224,7 @@ public class DownloadManager implements Closeable {
 
         void onFailure(DownloadTask task, Exception e);
 
-        void onProgress(DownloadTask task, long bytesRead, long totalBytes, double percent);
+        void onProgress(DownloadTask task, long bytesRead, long totalBytes, double percent, long eta);
     }
 
     public interface DownloadCallback {
