@@ -35,6 +35,8 @@ public class Updater {
     private final Info info;
     private final int MAJOR;
     private final int MINOR;
+    private final Path icon;
+    private final Path background;
 
     public Updater(Logger logger, DownloadManager downloadManager) throws IOException, InterruptedException {
         this.LOGGER = logger;
@@ -46,6 +48,9 @@ public class Updater {
         String[] parts = config.version.split("\\.");
         this.MAJOR = Integer.parseInt(parts[0]);
         this.MINOR = Integer.parseInt(parts[1]);
+
+        this.icon = cacheManager.getInfoFile("icon.png");
+        this.background = cacheManager.getInfoFile("background.png");
     }
 
     private Config readConfig() {
@@ -102,22 +107,22 @@ public class Updater {
         needUpdate.entrySet().stream().filter((e)-> e.getValue().size >0)
                 .forEach((e) -> cacheManager.getFile(e.getKey(),e.getValue()));
         downloadManager.awaitAllFinished();
-        needUpdate.forEach((path,meta) -> {
+        needUpdate.forEach((file,meta) -> {
             try {
-                Path file = Paths.get(path);
-                if (Files.exists(file)) {
-                    Path backup = Paths.get(BACKUP_DIR, now, path);
-                    Files.createDirectories(backup.getParent());
-                    LOGGER.info("备份文件: "+backup);
-                    Files.move(file, backup, StandardCopyOption.REPLACE_EXISTING);
+                Path path = Paths.get(file);
+                if (Files.exists(path)) {
+                    Path backupPath = Paths.get(BACKUP_DIR, now, file);
+                    Files.createDirectories(backupPath.getParent());
+                    LOGGER.info("备份文件: "+backupPath);
+                    Files.move(path, backupPath, StandardCopyOption.REPLACE_EXISTING);
                 }
                 if (meta.size > 0) {
-                    Path dl = cacheManager.getFile(path, meta, false);
-                    if (dl == null) {
+                    Path dlPath = cacheManager.getFile(file, meta, false);
+                    if (dlPath == null) {
                         throw new RuntimeException();
                     }
-                    LOGGER.info("安装文件: " + dl);
-                    Files.move(dl, file, StandardCopyOption.REPLACE_EXISTING);
+                    LOGGER.info("安装文件: " + dlPath);
+                    Files.move(dlPath, path, StandardCopyOption.REPLACE_EXISTING);
                 }
             } catch (IOException e) {
                 throw new RuntimeException(e);
@@ -153,18 +158,18 @@ public class Updater {
                     mayNeedUpdate.putAll(info.versions.get(v));
                 }
             });
-            mayNeedUpdate.forEach((path,meta) -> {
-                if (checkPath(path)) {
-                    Path file = Paths.get(path);
-                    boolean exist = Files.exists(file);
+            mayNeedUpdate.forEach((file,meta) -> {
+                if (checkPath(file)) {
+                    Path path = Paths.get(file);
+                    boolean exist = Files.exists(path);
                     if ((!exist && meta.size != 0) || (exist && !meta.hash.equals(cacheManager.getGameCache().get(file).hash))) {
-                        needUpdate.put(path, meta);
-                        if ("mods".equals(file.getName(0).toString())) {
+                        needUpdate.put(file, meta);
+                        if ("mods".equals(path.getName(0).toString())) {
                             modUpdate.set(true);
                         }
                     }
                 } else {
-                    LOGGER.info("warning: "+path);
+                    LOGGER.info("warning: "+file);
                 }
             });
             if (modUpdate.get()) {
@@ -185,6 +190,14 @@ public class Updater {
 
     public Config getConfig() {
         return config;
+    }
+
+    public Path getIcon() {
+        return icon;
+    }
+
+    public Path getBackground() {
+        return background;
     }
 
     public interface Logger {

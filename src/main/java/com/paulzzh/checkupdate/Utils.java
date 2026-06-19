@@ -56,8 +56,8 @@ public class Utils {
         return javaExec.getAbsolutePath();
     }
 
-    public static boolean checkPath(String path) {
-        return Paths.get(path).toAbsolutePath().normalize().startsWith(BASE);
+    public static boolean checkPath(String file) {
+        return Paths.get(file).toAbsolutePath().normalize().startsWith(BASE);
     }
 
     public static void walkdir(Path path, Consumer<Path> consumer) {

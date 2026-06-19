@@ -28,8 +28,9 @@ public class CacheManager {
     private final Map<String, HashSizeTime> gameCache = new HashMap<>();
     private final Map<String, Path> gameHash = new HashMap<>();
     private final Map<String, HashSizeTime> downloadCache = new ConcurrentHashMap<>();
-    private final Path downloadBase = Paths.get(CACHE_DIR, "dl");
-    private final Path downloadCacheFile = Paths.get(CACHE_DIR, "dl.json");
+    private final Path downloadBasePath = Paths.get(CACHE_DIR, "dl");
+    private final Path infoBasePath = Paths.get(CACHE_DIR, "info");
+    private final Path downloadCachePath = Paths.get(CACHE_DIR, "dl.json");
 
     public CacheManager(Config config,Info info, DownloadManager downloadManager, Updater.Logger logger) throws IOException {
         this.config = config;
@@ -43,62 +44,70 @@ public class CacheManager {
 
     private void flushGameCache() throws IOException {
         Files.createDirectories(Paths.get(CACHE_DIR));
-        Path cacheFile = Paths.get(CACHE_DIR, "cache.json");
+        Path cachePath = Paths.get(CACHE_DIR, "cache.json");
 
-        if (!Files.exists(cacheFile)) {
-            Files.write(cacheFile, "{}".getBytes(StandardCharsets.UTF_8));
+        if (!Files.exists(cachePath)) {
+            Files.write(cachePath, "{}".getBytes(StandardCharsets.UTF_8));
         }
 
-        try (Reader reader = new InputStreamReader(new FileInputStream(cacheFile.toFile()), StandardCharsets.UTF_8)) {
+        try (Reader reader = new InputStreamReader(new FileInputStream(cachePath.toFile()), StandardCharsets.UTF_8)) {
             Map<String, HashSizeTime> cacheOld = GSON.fromJson(reader, new TypeToken<Map<String, HashSizeTime>>(){}.getType());
             info.versions.forEach((ver,files) -> {
-                files.forEach((path, meta) -> {
-                    if (checkPath(path)) {
-                        Path file = Paths.get(path);
-                        if (Files.exists(file)) {
-                            HashSizeTime meta2 = makeCache(cacheOld, path);
-                            gameCache.put(path, meta2);
-                            gameHash.put(meta2.hash, file);
+                files.forEach((file, meta) -> {
+                    if (checkPath(file)) {
+                        Path path = Paths.get(file);
+                        if (Files.exists(path)) {
+                            HashSizeTime meta2 = makeCache(cacheOld, file);
+                            gameCache.put(file, meta2);
+                            gameHash.put(meta2.hash, path);
                         }
                     } else {
-                        LOGGER.info("warning: "+path);
+                        LOGGER.info("warning: "+file);
                     }
                 });
             });
         } catch (IOException ignored) {
         }
 
-        Files.write(cacheFile, GSON.toJson(gameCache).getBytes(StandardCharsets.UTF_8));
+        Files.write(cachePath, GSON.toJson(gameCache).getBytes(StandardCharsets.UTF_8));
     }
 
     private void flushDownloadCache() throws IOException {
-        Files.createDirectories(Paths.get(CACHE_DIR));
+        Path cacheDir = Paths.get(CACHE_DIR);
+        Files.createDirectories(cacheDir);
 
-        if (!Files.exists(downloadCacheFile)) {
-            Files.write(downloadCacheFile, "{}".getBytes(StandardCharsets.UTF_8));
+        if (!Files.exists(downloadCachePath)) {
+            Files.write(downloadCachePath, "{}".getBytes(StandardCharsets.UTF_8));
         }
 
-        try (Reader reader = new InputStreamReader(new FileInputStream(downloadCacheFile.toFile()), StandardCharsets.UTF_8)) {
+        try (Reader reader = new InputStreamReader(new FileInputStream(downloadCachePath.toFile()), StandardCharsets.UTF_8)) {
             Map<String, HashSizeTime> cacheOld = GSON.fromJson(reader, new TypeToken<Map<String, HashSizeTime>>(){}.getType());
-            walkdir(downloadBase, (file) -> {
-                if (file.toFile().isFile()) {
-                    String path = file.toString().replace("\\", "/");
-                    downloadCache.put(path, makeCache(cacheOld, path));
+            walkdir(downloadBasePath, (path) -> {
+                if (Files.isRegularFile(path)) {
+                    String file = path.toString().replace("\\", "/");
+                    downloadCache.put(file, makeCache(cacheOld, file));
+                }
+            });
+            walkdir(infoBasePath, (path) -> {
+                if (Files.isRegularFile(path)) {
+                    String file = path.toString().replace("\\", "/");
+                    downloadCache.put(file, makeCache(cacheOld, file));
                 }
             });
         } catch (IOException ignored) {
         }
 
-        Files.write(downloadCacheFile, GSON.toJson(downloadCache).getBytes(StandardCharsets.UTF_8));
+        Files.write(downloadCachePath, GSON.toJson(downloadCache).getBytes(StandardCharsets.UTF_8));
     }
 
     private void makeDownloadCache(String hash, Path path) {
         try {
+            String dlFile = path.toString().replace("\\","/");
             BasicFileAttributes stats = Files.readAttributes(path, BasicFileAttributes.class);
             long size = stats.size();
             long time = stats.lastModifiedTime().to(TimeUnit.NANOSECONDS);
-            downloadCache.put(path.toString(), new HashSizeTime(hash, size, time));
-            Files.write(downloadCacheFile, GSON.toJson(downloadCache).getBytes(StandardCharsets.UTF_8));
+            downloadCache.put(dlFile, new HashSizeTime(hash, size, time));
+            Files.write(downloadCachePath, GSON.toJson(downloadCache).getBytes(StandardCharsets.UTF_8));
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -124,36 +133,60 @@ public class CacheManager {
         return gameCache;
     }
 
+    public Path getInfoFile(String file) {
+        try {
+            HashSizeTime meta = info.info.get(file);
+            Path path = Paths.get(CACHE_DIR,"info", file);
+            String dlFile = path.toString().replace("\\","/");
+            Files.createDirectories(path.getParent());
+
+            if (downloadCache.containsKey(dlFile) && Files.exists(path)) {
+                if (meta.hash.equals(downloadCache.get(dlFile).hash)) {
+                    return path;
+                }
+            }
+            String url = config.host + "objects/" + meta.hash;
+            downloadManager.submit(new DownloadManager.DownloadTask(url, path.toFile(), meta.hash,
+                    3, 10_000, 30_000,
+                    (task, hash) -> makeDownloadCache(hash, path)));
+
+            downloadManager.awaitAllFinished();
+            return getInfoFile(file);
+        } catch (IOException|InterruptedException e) {
+            return null;
+        }
+    }
+
     public Path getFile(String path, HashSizeTime meta) {
         return getFile(path,meta,true);
     }
 
-    public Path getFile(String path, HashSizeTime meta, Boolean dl) {
+    public Path getFile(String file, HashSizeTime meta, Boolean dl) {
         try {
-            Path file = Paths.get(CACHE_DIR, "dl", path);
-            String dlpath = file.toString();
-            Files.createDirectories(file.getParent());
+            Path path = Paths.get(CACHE_DIR, "dl", file);
+            String dlFile = path.toString().replace("\\","/");
+            Files.createDirectories(path.getParent());
 
-            if (downloadCache.containsKey(dlpath) && Files.exists(file)) {
-                if (meta.hash.equals(downloadCache.get(dlpath).hash)){
-                    return file;
+            if (downloadCache.containsKey(dlFile) && Files.exists(path)) {
+                if (meta.hash.equals(downloadCache.get(dlFile).hash)){
+                    return path;
                 } else {
-                    Files.delete(file);
-                    downloadCache.remove(dlpath);
+                    Files.delete(path);
+                    downloadCache.remove(dlFile);
                 }
             }
 
             if (gameHash.containsKey(meta.hash) && Files.exists(gameHash.get(meta.hash))) {
-                Files.copy(gameHash.get(meta.hash), file, StandardCopyOption.REPLACE_EXISTING);
-                makeDownloadCache(meta.hash, file);
-                return file;
+                Files.copy(gameHash.get(meta.hash), path, StandardCopyOption.REPLACE_EXISTING);
+                makeDownloadCache(meta.hash, path);
+                return path;
             }
 
             if (dl) {
                 String url = config.host + "objects/" + meta.hash;
-                downloadManager.submit(new DownloadManager.DownloadTask(url, file.toFile(), meta.hash,
+                downloadManager.submit(new DownloadManager.DownloadTask(url, path.toFile(), meta.hash,
                         3, 10_000, 30_000,
-                        (task, hash) -> makeDownloadCache(hash, file)));
+                        (task, hash) -> makeDownloadCache(hash, path)));
             }
             return null;
         } catch (IOException|InterruptedException e) {

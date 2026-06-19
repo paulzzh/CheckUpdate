@@ -105,24 +105,29 @@ public class DownloadManager implements Closeable {
                 } catch (InterruptedException e) {
                     Thread.currentThread().interrupt();
                     lastError = e;
+                }
+
+                try {
+                    // 先回调
+                    if (success && task.callback != null) {
+                        task.callback.onSuccess(task, hash);
+                    }
+
+                    if (this.callback != null) {
+                        if (success) {
+                            this.callback.onSuccess(task);
+                        } else {
+                            this.callback.onFailure(task, lastError);
+                        }
+                    }
                 } finally {
+                    // 再释放控制资源
                     semaphore.release();
                     synchronized (finishLock) {
                         runningTasks--;
                         if (runningTasks == 0) {
                             finishLock.notifyAll();
                         }
-                    }
-                }
-                if (success && task.callback != null) {
-                    task.callback.onSuccess(task, hash);
-                }
-
-                if (this.callback != null) {
-                    if (success) {
-                        this.callback.onSuccess(task);
-                    } else {
-                        this.callback.onFailure(task, lastError);
                     }
                 }
             });

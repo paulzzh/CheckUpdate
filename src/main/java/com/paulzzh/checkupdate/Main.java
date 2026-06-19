@@ -76,6 +76,9 @@ public class Main {
         });
 
         updater = new Updater(Main::info, downloadManager);
+        updater.getIcon();
+        updater.getBackground();
+
         updater.checkUpdate();
 
         SwingUtilities.invokeLater(Main::initMainFrame);
