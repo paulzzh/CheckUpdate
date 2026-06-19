@@ -123,26 +123,33 @@ public class Main {
             @Override
             public void onAdd(DownloadManager.DownloadTask task) {
                 info("下载 " + task.getTargetFile().getName());
-                MainWindow.INSTANCE.getFoot().addTask(task);
+                if (MainWindow.INSTANCE != null && MainWindow.INSTANCE.getFoot() != null) {
+                    MainWindow.INSTANCE.getFoot().addTask(task);
+                }
             }
 
             @Override
             public void onSuccess(DownloadManager.DownloadTask task, String hash) {
                 info("完成 " + task.getTargetFile().getName() + " " + hash);
-                MainWindow.INSTANCE.getFoot().removeTask(task); // 完成后直接清理
+                if (MainWindow.INSTANCE != null && MainWindow.INSTANCE.getFoot() != null) {
+                    MainWindow.INSTANCE.getFoot().removeTask(task); // 完成后直接清理
+                }
             }
 
             @Override
             public void onFailure(DownloadManager.DownloadTask task, Exception e) {
                 info("失败 " + task.getTargetFile().getName() + " " + getStackTraceAsString(e));
-                MainWindow.INSTANCE.getFoot().updateTask(task, "失败 " + e.getMessage(), "Inf");
+                if (MainWindow.INSTANCE != null && MainWindow.INSTANCE.getFoot() != null) {
+                    MainWindow.INSTANCE.getFoot().updateTask(task, "失败 " + e.getMessage(), "Inf");
+                }
             }
 
             @Override
             public void onProgress(DownloadManager.DownloadTask task, long bytesRead, long totalBytes, double percent, long eta) {
                 String status = formatBytes(bytesRead) + " / " + formatBytes(totalBytes);
-                //info(status + " " + task.getTargetFile().getName());
-                MainWindow.INSTANCE.getFoot().updateTask(task, status, String.format("%.2f%% eta:", percent * 100) + formatSeconds(eta));
+                if (MainWindow.INSTANCE != null && MainWindow.INSTANCE.getFoot() != null) {
+                    MainWindow.INSTANCE.getFoot().updateTask(task, status, String.format("%.2f%% eta:", percent * 100) + formatSeconds(eta));
+                }
             }
         };
 
