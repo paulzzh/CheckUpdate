@@ -3,11 +3,12 @@ package com.paulzzh.checkupdate;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
+import java.io.RandomAccessFile;
 import java.net.URISyntaxException;
 import java.nio.channels.FileLock;
 import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.Map;
 
@@ -37,7 +38,7 @@ public class CheckUpdate implements
             }
             File checkUpdateJar = new File(JAR);
             String jarPath = CheckUpdate.class.getProtectionDomain().getCodeSource().getLocation().toURI().getPath();
-            LOGGER.info("jar: "+jarPath);
+            LOGGER.info("jar: " + jarPath);
             Files.copy(new File(jarPath).toPath(), checkUpdateJar.toPath(), StandardCopyOption.REPLACE_EXISTING);
 
             DownloadManager downloadManager = new DownloadManager(8, null);

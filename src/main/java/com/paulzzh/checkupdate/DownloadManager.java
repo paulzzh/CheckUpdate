@@ -7,69 +7,20 @@ import java.nio.file.Files;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Objects;
-import java.util.concurrent.*;
-
-import java.io.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Semaphore;
-
-import java.io.*;
-import java.util.concurrent.*;
+import java.util.concurrent.TimeUnit;
 
 import static com.paulzzh.checkupdate.Utils.bytesToHex;
 
 public class DownloadManager implements Closeable {
 
-    public interface ManagerCallback {
-        void onSuccess(DownloadTask task);
-        void onFailure(DownloadTask task, Exception e);
-        void onProgress(DownloadTask task, long bytesRead, long totalBytes, double percent);
-    }
-
-    public interface DownloadCallback {
-        void onSuccess(DownloadTask task, String hash);
-    }
-
-    public static class DownloadTask {
-        private final String url;
-        private final File targetFile;
-        private final String hash;
-        private final int maxRetries;
-        private final int connectTimeoutMs;
-        private final int readTimeoutMs;
-        private final DownloadCallback callback;
-
-        public DownloadTask(String url,
-                            File targetFile,
-                            String hash,
-                            int maxRetries,
-                            int connectTimeoutMs,
-                            int readTimeoutMs,
-                            DownloadCallback callback) {
-            this.url = Objects.requireNonNull(url);
-            this.targetFile = Objects.requireNonNull(targetFile);
-            this.hash = hash;
-            this.maxRetries = Math.max(0, maxRetries);
-            this.connectTimeoutMs = connectTimeoutMs;
-            this.readTimeoutMs = readTimeoutMs;
-            this.callback = callback;
-        }
-
-        public String getUrl() { return url; }
-        public File getTargetFile() { return targetFile; }
-        public int getMaxRetries() { return maxRetries; }
-        public int getConnectTimeoutMs() { return connectTimeoutMs; }
-        public int getReadTimeoutMs() { return readTimeoutMs; }
-    }
-
     private final Semaphore semaphore;
     private final ExecutorService executor;
     private final ManagerCallback callback;
-
     private final Object finishLock = new Object();
     private int runningTasks = 0;
-
     public DownloadManager(int maxConcurrent, ManagerCallback callback) {
         this.semaphore = new Semaphore(maxConcurrent);
         this.executor = Executors.newFixedThreadPool(maxConcurrent);
@@ -219,5 +170,63 @@ public class DownloadManager implements Closeable {
     @Override
     public void close() {
         shutdown();
+    }
+
+    public interface ManagerCallback {
+        void onSuccess(DownloadTask task);
+
+        void onFailure(DownloadTask task, Exception e);
+
+        void onProgress(DownloadTask task, long bytesRead, long totalBytes, double percent);
+    }
+
+    public interface DownloadCallback {
+        void onSuccess(DownloadTask task, String hash);
+    }
+
+    public static class DownloadTask {
+        private final String url;
+        private final File targetFile;
+        private final String hash;
+        private final int maxRetries;
+        private final int connectTimeoutMs;
+        private final int readTimeoutMs;
+        private final DownloadCallback callback;
+
+        public DownloadTask(String url,
+                            File targetFile,
+                            String hash,
+                            int maxRetries,
+                            int connectTimeoutMs,
+                            int readTimeoutMs,
+                            DownloadCallback callback) {
+            this.url = Objects.requireNonNull(url);
+            this.targetFile = Objects.requireNonNull(targetFile);
+            this.hash = hash;
+            this.maxRetries = Math.max(0, maxRetries);
+            this.connectTimeoutMs = connectTimeoutMs;
+            this.readTimeoutMs = readTimeoutMs;
+            this.callback = callback;
+        }
+
+        public String getUrl() {
+            return url;
+        }
+
+        public File getTargetFile() {
+            return targetFile;
+        }
+
+        public int getMaxRetries() {
+            return maxRetries;
+        }
+
+        public int getConnectTimeoutMs() {
+            return connectTimeoutMs;
+        }
+
+        public int getReadTimeoutMs() {
+            return readTimeoutMs;
+        }
     }
 }

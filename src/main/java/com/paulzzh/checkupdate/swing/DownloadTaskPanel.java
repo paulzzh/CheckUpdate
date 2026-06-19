@@ -16,9 +16,9 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class DownloadTaskPanel extends JPanel {
     private static final Color PANEL_BG = new Color(255, 255, 255, 0);  // 外层：不透明，避免空白透出
-    private static final Color CELL_BG  = new Color(255, 255, 255, 102);  // 单元格：40% 白底
-    private static final Color HEAD_BG  = new Color(255, 255, 255, 160);   // 表头：略深一点
-    private static final Color TEXT     = Color.BLACK;
+    private static final Color CELL_BG = new Color(255, 255, 255, 102);  // 单元格：40% 白底
+    private static final Color HEAD_BG = new Color(255, 255, 255, 160);   // 表头：略深一点
+    private static final Color TEXT = Color.BLACK;
 
     private final Map<DownloadManager.DownloadTask, TaskRow> taskRowMap = new ConcurrentHashMap<>();
     private final TaskTableModel tableModel = new TaskTableModel();

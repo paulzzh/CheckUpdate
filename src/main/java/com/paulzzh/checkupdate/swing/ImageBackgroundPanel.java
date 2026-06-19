@@ -15,13 +15,13 @@ public class ImageBackgroundPanel extends JPanel {
         setOpaque(true);
     }
 
+    public Image getBackgroundImage() {
+        return backgroundImage;
+    }
+
     public void setBackgroundImage(Image backgroundImage) {
         this.backgroundImage = backgroundImage;
         repaint();
-    }
-
-    public Image getBackgroundImage() {
-        return backgroundImage;
     }
 
     @Override

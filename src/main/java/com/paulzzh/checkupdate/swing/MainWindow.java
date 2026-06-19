@@ -4,6 +4,8 @@ import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
 
+import static com.paulzzh.checkupdate.Main.info;
+
 public class MainWindow extends JFrame {
     public static MainWindow INSTANCE;
     private final CardLayout cardLayout = new CardLayout();
@@ -13,6 +15,7 @@ public class MainWindow extends JFrame {
 
     private BootstrapLikeRowPanel head;
     private DownloadTaskPanel foot;
+    private LogPanel logPanel;
 
     public MainWindow() {
         INSTANCE = this;
@@ -44,6 +47,13 @@ public class MainWindow extends JFrame {
         cardLayout.show(root, "少女祈祷中...");
     }
 
+    private static JPanel wrap(JComponent c) {
+        JPanel p = new JPanel(new BorderLayout());
+        p.setOpaque(false);
+        p.add(c, BorderLayout.CENTER);
+        return p;
+    }
+
     private void buildLoadingPanel() {
         JLabel label = new JLabel("少女祈祷中...");
         label.setForeground(Color.WHITE);
@@ -64,10 +74,22 @@ public class MainWindow extends JFrame {
             head = new BootstrapLikeRowPanel(icon, name, version);
             head.setBorder(new EmptyBorder(0, 20, 0, 20));
 
-            foot = new DownloadTaskPanel();
-            foot.setBorder(new EmptyBorder(0, 20, 20, 20));
+            DownloadTaskPanel taskPanel = new DownloadTaskPanel();
+            taskPanel.setBorder(new EmptyBorder(0, 20, 20, 5));
 
-            JSplitPane split = new JSplitPane(JSplitPane.VERTICAL_SPLIT, wrap(head), wrap(foot));
+            logPanel = new LogPanel();
+            logPanel.setBorder(new EmptyBorder(0, 5, 20, 20));
+
+            JSplitPane footSplit = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, wrap(taskPanel), wrap(logPanel));
+            footSplit.setBorder(null);
+            footSplit.setOpaque(false);
+            footSplit.setContinuousLayout(true);
+            footSplit.setResizeWeight(0.5);   // 左右各一半
+            footSplit.setDividerSize(0);
+
+            foot = taskPanel; // 如果你还想保留原来的 foot 字段，就让它指向左侧表格
+
+            JSplitPane split = new JSplitPane(JSplitPane.VERTICAL_SPLIT, wrap(head), wrap(footSplit));
             split.setBorder(null);
             split.setOpaque(false);
             split.setContinuousLayout(true);
@@ -80,7 +102,12 @@ public class MainWindow extends JFrame {
             mainPanel.repaint();
 
             cardLayout.show(root, "main");
-            SwingUtilities.invokeLater(() -> split.setDividerLocation(0.35));
+            SwingUtilities.invokeLater(() -> {
+                split.setDividerLocation(0.35);
+                footSplit.setDividerLocation(0.5);
+            });
+
+            info("UI 加载完毕");
         });
     }
 
@@ -92,10 +119,7 @@ public class MainWindow extends JFrame {
         return foot;
     }
 
-    private static JPanel wrap(JComponent c) {
-        JPanel p = new JPanel(new BorderLayout());
-        p.setOpaque(false);
-        p.add(c, BorderLayout.CENTER);
-        return p;
+    public LogPanel getLog() {
+        return logPanel;
     }
 }

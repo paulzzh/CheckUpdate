@@ -5,13 +5,13 @@ import javax.swing.border.EmptyBorder;
 import java.awt.*;
 
 public class BootstrapLikeRowPanel extends JPanel {
+    private static final int ROW_HEIGHT = 42;
+    private static final int COL_WIDTH = 140;
     private final SquareIconView iconView = new SquareIconView();
     private final TranslucentTextBox nameBox = new TranslucentTextBox();
     private final TranslucentTextBox versionBox = new TranslucentTextBox();
     private final JButton updateButton = createOutlinedButton("检查更新");
     private final JButton fixButton = createOutlinedButton("修复整合包");
-    private static final int ROW_HEIGHT = 42;
-    private static final int COL_WIDTH = 140;
 
     public BootstrapLikeRowPanel(ImageIcon icon, String name, String version) {
         setOpaque(false);
@@ -55,6 +55,23 @@ public class BootstrapLikeRowPanel extends JPanel {
         add(buttonPanel, gbc);
     }
 
+    private static JButton createOutlinedButton(String text) {
+        JButton button = new JButton(text);
+        button.setFocusPainted(false);
+        button.setContentAreaFilled(false);
+        button.setOpaque(false);
+        button.setForeground(new Color(0x0D6EFD));
+        button.setBorder(BorderFactory.createLineBorder(new Color(0x0D6EFD), 1, true));
+        button.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        button.setPreferredSize(new Dimension(COL_WIDTH, ROW_HEIGHT));
+        button.setMinimumSize(new Dimension(COL_WIDTH, ROW_HEIGHT));
+        button.setMaximumSize(new Dimension(COL_WIDTH, ROW_HEIGHT));
+
+        // 让文字在 42 高度里居中
+        button.setMargin(new Insets(0, 12, 0, 12));
+        return button;
+    }
+
     public void setIcon(ImageIcon icon) {
         iconView.setIcon(icon);
     }
@@ -73,23 +90,6 @@ public class BootstrapLikeRowPanel extends JPanel {
 
     public void setFixButtonAction(Runnable action) {
         fixButton.addActionListener(e -> action.run());
-    }
-
-    private static JButton createOutlinedButton(String text) {
-        JButton button = new JButton(text);
-        button.setFocusPainted(false);
-        button.setContentAreaFilled(false);
-        button.setOpaque(false);
-        button.setForeground(new Color(0x0D6EFD));
-        button.setBorder(BorderFactory.createLineBorder(new Color(0x0D6EFD), 1, true));
-        button.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        button.setPreferredSize(new Dimension(COL_WIDTH, ROW_HEIGHT));
-        button.setMinimumSize(new Dimension(COL_WIDTH, ROW_HEIGHT));
-        button.setMaximumSize(new Dimension(COL_WIDTH, ROW_HEIGHT));
-
-        // 让文字在 42 高度里居中
-        button.setMargin(new Insets(0, 12, 0, 12));
-        return button;
     }
 
     private static class TranslucentTextBox extends JPanel {
@@ -129,7 +129,7 @@ public class BootstrapLikeRowPanel extends JPanel {
 
     private static class SquareIconView extends JComponent {
         private ImageIcon icon;
-        private int baseSize = 80;
+        private final int baseSize = 80;
 
         public void setIcon(ImageIcon icon) {
             this.icon = icon;

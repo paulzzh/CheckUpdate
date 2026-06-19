@@ -13,6 +13,6 @@ public class HashSizeTime {
 
     @Override
     public String toString() {
-        return String.format("{hash=%s, size=%d, time=%d}",hash,size,time);
+        return String.format("{hash=%s, size=%d, time=%d}", hash, size, time);
     }
 }

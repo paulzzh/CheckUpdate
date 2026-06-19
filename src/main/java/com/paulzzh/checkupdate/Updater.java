@@ -54,7 +54,7 @@ public class Updater {
     }
 
     private Config readConfig() {
-        try (Reader reader = new InputStreamReader(new FileInputStream(CONF),StandardCharsets.UTF_8)) {
+        try (Reader reader = new InputStreamReader(new FileInputStream(CONF), StandardCharsets.UTF_8)) {
             return GSON.fromJson(reader, Config.class);
         } catch (IOException e) {
             throw new RuntimeException(e);
@@ -64,7 +64,7 @@ public class Updater {
     private Info readInfo() throws IOException {
 
         String url = config.host + URLEncoder.encode(config.name, StandardCharsets.UTF_8.name()) + "/info";
-        LOGGER.info("baseurl: "+url);
+        LOGGER.info("baseurl: " + url);
         HttpURLConnection conn = (HttpURLConnection) new URL(url).openConnection();
         conn.setConnectTimeout(10_000);
         conn.setReadTimeout(30_000);
@@ -93,7 +93,7 @@ public class Updater {
             }
 
             signature.verify(sign);
-            return GSON.fromJson(new InputStreamReader(new ByteArrayInputStream(out.toByteArray()),StandardCharsets.UTF_8), Info.class);
+            return GSON.fromJson(new InputStreamReader(new ByteArrayInputStream(out.toByteArray()), StandardCharsets.UTF_8), Info.class);
 
         } catch (InvalidKeySpecException | NoSuchAlgorithmException | InvalidKeyException | SignatureException e) {
             throw new RuntimeException(e);
@@ -104,16 +104,16 @@ public class Updater {
     private void update(String version, Map<String, HashSizeTime> needUpdate) throws InterruptedException, IOException {
         int total = needUpdate.size();
         String now = String.valueOf(Instant.now().getEpochSecond());
-        needUpdate.entrySet().stream().filter((e)-> e.getValue().size >0)
-                .forEach((e) -> cacheManager.getFile(e.getKey(),e.getValue()));
+        needUpdate.entrySet().stream().filter((e) -> e.getValue().size > 0)
+                .forEach((e) -> cacheManager.getFile(e.getKey(), e.getValue()));
         downloadManager.awaitAllFinished();
-        needUpdate.forEach((file,meta) -> {
+        needUpdate.forEach((file, meta) -> {
             try {
                 Path path = Paths.get(file);
                 if (Files.exists(path)) {
                     Path backupPath = Paths.get(BACKUP_DIR, now, file);
                     Files.createDirectories(backupPath.getParent());
-                    LOGGER.info("备份文件: "+backupPath);
+                    LOGGER.info("备份文件: " + backupPath);
                     Files.move(path, backupPath, StandardCopyOption.REPLACE_EXISTING);
                 }
                 if (meta.size > 0) {
@@ -136,7 +136,7 @@ public class Updater {
 
     public Result checkUpdate() throws InterruptedException, IOException {
         List<String> versions = info.versions.keySet().stream().sorted(new Utils.VersionComparator()).collect(Collectors.toList());
-        LOGGER.info("ver: "+versions);
+        LOGGER.info("ver: " + versions);
         String latest = versions.get(versions.size() - 1);
 
         if (config.version.equals(latest)) {
@@ -158,7 +158,7 @@ public class Updater {
                     mayNeedUpdate.putAll(info.versions.get(v));
                 }
             });
-            mayNeedUpdate.forEach((file,meta) -> {
+            mayNeedUpdate.forEach((file, meta) -> {
                 if (checkPath(file)) {
                     Path path = Paths.get(file);
                     boolean exist = Files.exists(path);
@@ -169,7 +169,7 @@ public class Updater {
                         }
                     }
                 } else {
-                    LOGGER.info("warning: "+file);
+                    LOGGER.info("warning: " + file);
                 }
             });
             if (modUpdate.get()) {
