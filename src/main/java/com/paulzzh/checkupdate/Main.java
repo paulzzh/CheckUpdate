@@ -166,18 +166,18 @@ public class Main {
                 }
             } catch (OverlappingFileLockException e) {
                 // Thrown if this JVM already holds a lock on the same file region
-                System.out.println("Lock already held by another thread in this JVM.");
+                info("Lock already held by another thread in this JVM.");
             } catch (IOException e) {
-                System.out.println("System-level locking conflict or OS interference encountered.");
+                info("System-level locking conflict or OS interference encountered.");
             }
 
-            System.out.printf("Attempt %d/%d failed. Retrying in %d ms...%n", attempt, maxRetries, sleepMillis);
+            info(String.format("Attempt %d/%d failed. Retrying in %d ms...%n", attempt, maxRetries, sleepMillis));
 
             try {
                 Thread.sleep(sleepMillis);
             } catch (InterruptedException ie) {
                 Thread.currentThread().interrupt(); // Restore interrupted status
-                System.err.println("Lock acquisition retry loop was interrupted.");
+                info("Lock acquisition retry loop was interrupted.");
                 break;
             }
         }
