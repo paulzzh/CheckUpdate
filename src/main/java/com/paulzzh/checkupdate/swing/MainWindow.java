@@ -29,7 +29,7 @@ public class MainWindow extends JFrame {
         ImageBackgroundPanel background = new ImageBackgroundPanel(new ImageIcon("CheckUpdateCache/info/background.png").getImage());
         background.setLayout(new BorderLayout());
 
-        JLabel label = new JLabel("少女祈祷中...");
+        JLabel label = new JLabel(" ☯少女祈祷中...");
         label.setForeground(Color.RED);
         label.setFont(label.getFont().deriveFont(Font.BOLD, 22f));
         mainPanel.add(label, BorderLayout.NORTH);
