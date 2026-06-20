@@ -13,6 +13,7 @@ import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
 import static com.paulzzh.checkupdate.Utils.bytesToHex;
+import static com.paulzzh.checkupdate.Utils.getSHA256;
 
 public class DownloadManager implements Closeable {
 
@@ -121,18 +122,56 @@ public class DownloadManager implements Closeable {
         HttpURLConnection conn = (HttpURLConnection) url.openConnection();
         conn.setConnectTimeout(task.getConnectTimeoutMs());
         conn.setReadTimeout(task.getReadTimeoutMs());
-        // 避免压缩导致 Range 字节偏移失真
         conn.setRequestProperty("Accept-Encoding", "identity");
 
         File target = task.getTargetFile();
         File tmp = new File(target.getAbsolutePath() + ".!part");
 
         long existing = tmp.exists() ? tmp.length() : 0L;
-        long total = 0;
 
         // 如果已有临时文件，断点续传
         if (existing > 0) {
             conn.setRequestProperty("Range", "bytes=" + existing + "-");
+        }
+
+        int code = conn.getResponseCode();
+        // 先处理服务器拒绝 Range 的情况
+        if (existing > 0 && code == HttpURLConnection.HTTP_OK) {
+            // 服务器忽略了 Range，说明不支持续传或资源已变化，直接重下
+            existing = 0L;
+            try (FileOutputStream ignored = new FileOutputStream(tmp, false)) {
+                // truncate tmp
+            }
+        }
+
+        // 416：请求范围不合法。常见于“本地 part 已经等于完整文件大小”
+        if (code == 416 && existing > 0) {
+            long remoteTotal = parseTotalFromContentRange(conn.getHeaderField("Content-Range"));
+            if (remoteTotal > 0 && remoteTotal == existing) {
+                // 临时文件可能已经完整，直接校验 hash
+                String localHash = getSHA256(tmp);
+                if (!localHash.equalsIgnoreCase(task.hash)) {
+                    throw new IOException("断点文件已存在，但校验失败: " + tmp.getAbsolutePath());
+                }
+                Files.move(tmp.toPath(), target.toPath(), java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+                return localHash;
+            }
+
+            // 其他情况：删掉坏的 part，重新下载
+            if (tmp.exists() && !tmp.delete()) {
+                throw new IOException("无法删除损坏的临时文件: " + tmp.getAbsolutePath());
+            }
+            existing = 0L;
+
+            conn.disconnect();
+            conn = (HttpURLConnection) url.openConnection();
+            conn.setConnectTimeout(task.getConnectTimeoutMs());
+            conn.setReadTimeout(task.getReadTimeoutMs());
+            conn.setRequestProperty("Accept-Encoding", "identity");
+        }
+
+        long total = 0;
+        if (existing > 0) {
             total = parseTotalFromContentRange(conn.getHeaderField("Content-Range"));
         } else {
             total = conn.getContentLengthLong();

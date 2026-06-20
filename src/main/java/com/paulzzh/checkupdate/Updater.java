@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static com.paulzzh.checkupdate.Utils.*;
 
@@ -117,9 +118,50 @@ public class Updater {
         }
     }
 
-    private void updateMajor(String version, Map<String, HashSizeTime> needUpdate) {
+    private void updateMajor(String version, Map<String, HashSizeTime> needUpdate) throws InterruptedException, IOException {
+        String now = String.valueOf(Instant.now().getEpochSecond());
+        Path tempDirPath = Paths.get(CACHE_DIR, now);
+        walkdir(tempDirPath, Utils::deletefile);
+
+        needUpdate.entrySet().stream().filter((e) -> e.getValue().size > 0)
+                .forEach((e) -> cacheManager.getFile(e.getKey(), e.getValue()));
+        downloadManager.awaitAllFinished();
+
+        needUpdate.forEach((file, meta) -> {
+            try {
+                Path dlPath = cacheManager.getFile(file, meta, false);
+                Path tempPath = Paths.get(CACHE_DIR, now, file);
+                Files.createDirectories(tempPath.getParent());
+                LOGGER.info("安装文件: " + tempPath);
+                Files.move(dlPath, tempPath, StandardCopyOption.REPLACE_EXISTING);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        });
+
+        try (Stream<Path> stream = Files.list(tempDirPath)) {
+            stream.forEach((tempPath) -> {
+                try {
+                    String dirFile = tempPath.getFileName().toString();
+                    Path path = Paths.get(dirFile);
+                    if (Files.exists(path)) {
+                        Path backupPath = Paths.get(BACKUP_DIR, now, dirFile);
+                        Files.createDirectories(backupPath.getParent());
+                        LOGGER.info("备份文件: " + backupPath);
+                        Files.move(path, backupPath, StandardCopyOption.REPLACE_EXISTING);
+                    }
+                    LOGGER.info("移动文件: " + path);
+                    Files.move(tempPath, path, StandardCopyOption.REPLACE_EXISTING);
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+            });
+        }
+        config.version = version;
+        Files.write(Paths.get(CONF), GSON.toJson(config).getBytes(StandardCharsets.UTF_8));
 
         walkdir(Paths.get(CACHE_DIR, "dl"), Utils::deletefile);
+        walkdir(tempDirPath, Utils::deletefile);
     }
 
     private void update(String version, Map<String, HashSizeTime> needUpdate) throws InterruptedException, IOException {
