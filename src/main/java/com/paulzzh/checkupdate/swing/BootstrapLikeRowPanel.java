@@ -72,7 +72,7 @@ public class BootstrapLikeRowPanel extends JPanel {
         button.setContentAreaFilled(false);
         button.setOpaque(false);
         button.setForeground(new Color(0x0D6EFD));
-        button.setBorder(BorderFactory.createLineBorder(new Color(0x0D6EFD), 1));
+        button.setBorder(BorderFactory.createLineBorder(Color.GRAY, 1));
         button.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         button.setPreferredSize(new Dimension(COL_WIDTH, ROW_HEIGHT));
         button.setMinimumSize(new Dimension(COL_WIDTH, ROW_HEIGHT));
