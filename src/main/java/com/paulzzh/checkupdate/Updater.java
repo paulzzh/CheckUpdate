@@ -39,7 +39,7 @@ public class Updater {
     private final Path icon;
     private final Path background;
 
-    public Updater(Logger logger, DownloadManager.ManagerCallback callback) throws IOException, InterruptedException {
+    public Updater(Logger logger, DownloadManager.ManagerCallback callback) throws IOException {
         this.LOGGER = logger;
         this.config = readConfig();
         this.downloadManager = new DownloadManager(config.thread, callback);

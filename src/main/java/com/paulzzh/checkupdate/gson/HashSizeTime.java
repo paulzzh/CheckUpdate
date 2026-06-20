@@ -1,9 +1,9 @@
 package com.paulzzh.checkupdate.gson;
 
 public class HashSizeTime {
-    public String hash;
-    public long size;
-    public long time;
+    public final String hash;
+    public final long size;
+    public final long time;
 
     public HashSizeTime(String hash, long size, long time) {
         this.hash = hash;
