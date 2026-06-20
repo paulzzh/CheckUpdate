@@ -39,7 +39,7 @@ public class DownloadTaskPanel extends JPanel {
         setBackground(PANEL_BG);
         setLayout(new BorderLayout());
 
-        table.setFillsViewportHeight(false); // 关键：不要让空白区也跟着表格背景走
+        table.setFillsViewportHeight(true); // 关键：让空白区也填充背景
         table.setRowHeight(26);
         table.setFocusable(false);
         table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);

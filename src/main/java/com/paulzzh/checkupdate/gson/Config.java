@@ -14,4 +14,16 @@ public class Config {
 
     @SerializedName("thread")
     public int thread;
+
+    @SerializedName("retry")
+    public int retry;
+
+    @SerializedName("c_timeout")
+    public int connectTimeout;
+
+    @SerializedName("r_timeout")
+    public int readTimeout;
+
+    @SerializedName("public_key")
+    public String publicKey;
 }

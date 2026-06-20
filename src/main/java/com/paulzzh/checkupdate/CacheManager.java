@@ -155,7 +155,7 @@ public class CacheManager {
             }
             String url = config.host + "objects/" + meta.hash;
             downloadManager.submit(new DownloadManager.DownloadTask(url, path.toFile(), meta.hash,
-                    5, 5_000, 30_000,
+                    config.retry, config.connectTimeout, config.readTimeout,
                     (task, hash) -> makeDownloadCache(hash, path)));
 
             downloadManager.awaitAllFinished();
@@ -193,7 +193,7 @@ public class CacheManager {
             if (dl) {
                 String url = config.host + "objects/" + meta.hash;
                 downloadManager.submit(new DownloadManager.DownloadTask(url, path.toFile(), meta.hash,
-                        5, 5_000, 30_000,
+                        config.retry, config.connectTimeout, config.readTimeout,
                         (task, hash) -> makeDownloadCache(hash, path)));
             }
             return null;

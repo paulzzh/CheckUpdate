@@ -11,7 +11,6 @@ public class MainWindow extends JFrame {
     public static MainWindow INSTANCE;
     private final CardLayout cardLayout = new CardLayout();
     private final JPanel root = new JPanel(cardLayout);
-    private final JPanel loadingPanel = new JPanel(new GridBagLayout());
     private final JPanel mainPanel = new JPanel(new BorderLayout());
 
     private BootstrapLikeRowPanel head;
@@ -30,14 +29,15 @@ public class MainWindow extends JFrame {
         ImageBackgroundPanel background = new ImageBackgroundPanel(new ImageIcon("CheckUpdateCache/info/background.png").getImage());
         background.setLayout(new BorderLayout());
 
-        buildLoadingPanel();
+        JLabel label = new JLabel("少女祈祷中...");
+        label.setForeground(Color.RED);
+        label.setFont(label.getFont().deriveFont(Font.BOLD, 22f));
+        mainPanel.add(label, BorderLayout.NORTH);
 
         root.setOpaque(false);
-        loadingPanel.setOpaque(false);
         mainPanel.setOpaque(false);
 
-        root.add(loadingPanel, "少女祈祷中...");
-        root.add(mainPanel, "少女祈祷中...");
+        root.add(mainPanel);
 
         background.add(root, BorderLayout.CENTER);
         setContentPane(background);
@@ -53,13 +53,6 @@ public class MainWindow extends JFrame {
         p.setOpaque(false);
         p.add(c, BorderLayout.CENTER);
         return p;
-    }
-
-    private void buildLoadingPanel() {
-        JLabel label = new JLabel("少女祈祷中...");
-        label.setForeground(Color.WHITE);
-        label.setFont(label.getFont().deriveFont(Font.BOLD, 22f));
-        loadingPanel.add(label);
     }
 
     public void showMainUI(ImageIcon icon, String name, String version, Image backgroundImage) throws InterruptedException, InvocationTargetException {

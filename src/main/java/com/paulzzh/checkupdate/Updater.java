@@ -56,7 +56,20 @@ public class Updater {
 
     private Config readConfig() {
         try (Reader reader = new InputStreamReader(Files.newInputStream(Paths.get(CONF)), StandardCharsets.UTF_8)) {
-            return GSON.fromJson(reader, Config.class);
+            Config c = GSON.fromJson(reader, Config.class);
+            if (c.thread <= 0) {
+                c.thread = 8;
+            }
+            if (c.retry <= 0) {
+                c.retry = 5;
+            }
+            if (c.connectTimeout < 1_000) {
+                c.connectTimeout = 5_000;
+            }
+            if (c.readTimeout < 1_000) {
+                c.readTimeout = 30_000;
+            }
+            return c;
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -80,7 +93,7 @@ public class Updater {
         try (InputStream in = conn.getInputStream();
              ByteArrayOutputStream out = new ByteArrayOutputStream()) {
 
-            byte[] keyBytes = Base64.getDecoder().decode(PUBLIC_KEY);
+            byte[] keyBytes = Base64.getDecoder().decode(config.publicKey);
             X509EncodedKeySpec spec = new X509EncodedKeySpec(keyBytes);
             KeyFactory kf = KeyFactory.getInstance("RSA");
             Signature signature = Signature.getInstance("SHA256withRSA");

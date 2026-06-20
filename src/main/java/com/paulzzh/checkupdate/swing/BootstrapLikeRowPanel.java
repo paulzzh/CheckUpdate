@@ -56,13 +56,23 @@ public class BootstrapLikeRowPanel extends JPanel {
     }
 
     private static JButton createOutlinedButton(String text) {
-        JButton button = new JButton(text);
+        JButton button = new JButton(text) {
+            @Override
+            protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                g2.setColor(new Color(255, 255, 255, 102)); // 40% 白色
+                g2.fillRect(0, 0, getWidth(), getHeight());
+                g2.dispose();
+                super.paintComponent(g);
+            }
+        };
         button.setEnabled(false);
         button.setFocusPainted(false);
         button.setContentAreaFilled(false);
         button.setOpaque(false);
         button.setForeground(new Color(0x0D6EFD));
-        button.setBorder(BorderFactory.createLineBorder(new Color(0x0D6EFD), 1, true));
+        button.setBorder(BorderFactory.createLineBorder(new Color(0x0D6EFD), 1));
         button.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         button.setPreferredSize(new Dimension(COL_WIDTH, ROW_HEIGHT));
         button.setMinimumSize(new Dimension(COL_WIDTH, ROW_HEIGHT));
@@ -94,6 +104,9 @@ public class BootstrapLikeRowPanel extends JPanel {
     }
 
     public void setEnable(boolean b) {
+        Color c = b ? new Color(0x0D6EFD) : Color.GRAY;
+        updateButton.setBorder(BorderFactory.createLineBorder(c, 1));
+        fixButton.setBorder(BorderFactory.createLineBorder(c, 1));
         updateButton.setEnabled(b);
         fixButton.setEnabled(b);
     }
@@ -126,8 +139,8 @@ public class BootstrapLikeRowPanel extends JPanel {
         protected void paintComponent(Graphics g) {
             Graphics2D g2 = (Graphics2D) g.create();
             g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-            g2.setColor(new Color(255, 255, 255, 153)); // 60% 白色
-            g2.fillRoundRect(0, 0, getWidth(), getHeight(), 12, 12);
+            g2.setColor(new Color(255, 255, 255, 102)); // 40% 白色
+            g2.fillRect(0, 0, getWidth(), getHeight());
             g2.dispose();
             super.paintComponent(g);
         }
@@ -185,7 +198,8 @@ public class BootstrapLikeRowPanel extends JPanel {
             g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
             g2.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
             g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-
+            g2.setColor(new Color(255, 255, 255, 102)); // 40% 白色
+            g2.fillRect(0, 0, getWidth(), getHeight());
             g2.drawImage(icon.getImage(), dx, dy, dw, dh, this);
 
             g2.dispose();

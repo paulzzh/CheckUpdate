@@ -25,7 +25,6 @@ public class Utils {
     public final static String CONF = "CheckUpdate.config";
     public final static String CACHE_DIR = "CheckUpdateCache";
     public final static String BACKUP_DIR = "CheckUpdateBackup";
-    public final static String PUBLIC_KEY = "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAnTC/qb22DOTl4U0nAUEwl+8P8U84mlizZ7SHA9ldG3ShRoQEyc2cU0MbxIKZtIPL+sHrfCt+iypDFIHzhORw8Uo/U973yx4/jhgJmBjxLIUCcG8qjC431bMNEeZ/Pp5czHqYp1vQcU+eFfeaLZN4qN1GVtK4kz3GLFfAhyNsh8vZAl5LGV7B3h37ReGSIA8mXrcJCfAI6hdP8kEtViIbWG5d7cSn9Y05h6cHOrAYFw3Zozt4fsI9w7KsTecMfuHVEO+wmeZuN3yj32oWRygJR/xb0x+x7bFN9rgyMOGSr45eFtmjFEa5KSvdMDu2aetlIkYkW8c5BIgFSmxUODz93QIDAQAB";
     public final static Gson GSON = new Gson();
     public final static String BASE = Paths.get("").toAbsolutePath().normalize().toString();
 
