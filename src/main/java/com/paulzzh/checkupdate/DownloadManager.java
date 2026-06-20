@@ -170,7 +170,7 @@ public class DownloadManager implements Closeable {
             conn.setRequestProperty("Accept-Encoding", "identity");
         }
 
-        long total = 0;
+        long total;
         if (existing > 0) {
             total = parseTotalFromContentRange(conn.getHeaderField("Content-Range"));
         } else {
@@ -181,7 +181,7 @@ public class DownloadManager implements Closeable {
 
         // 如果是续传，先把已有 part 的内容喂给 digest
         if (existing > 0) {
-            try (InputStream seed = new BufferedInputStream(new FileInputStream(tmp))) {
+            try (InputStream seed = new BufferedInputStream(Files.newInputStream(tmp.toPath()))) {
                 byte[] buf = new byte[8192];
                 int len;
                 while ((len = seed.read(buf)) != -1) {

@@ -24,6 +24,9 @@ public class Main {
     private final static ConcurrentLinkedQueue<String> logCache = new ConcurrentLinkedQueue<>();
     private final static DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HH:mm:ss.SSS");
     private static Updater updater;
+    private static RandomAccessFile raf;
+    private static FileChannel channel;
+    private static FileLock lock;
 
     static {
         Thread.setDefaultUncaughtExceptionHandler((thread, throwable) -> {
@@ -71,9 +74,9 @@ public class Main {
         });
 
         File file = new File(LOCK_FILE);
-        RandomAccessFile raf = new RandomAccessFile(file, "rw");
-        FileChannel channel = raf.getChannel();
-        FileLock lock = acquireLockWithRetry(channel, 10, 500);
+        raf = new RandomAccessFile(file, "rw");
+        channel = raf.getChannel();
+        lock = acquireLockWithRetry(channel, 10, 500);
 
         while (lock == null) {
             Object[] options = {"重试", "退出"};
@@ -86,6 +89,7 @@ public class Main {
         }
 
         doUpdate(updater.checkUpdate());
+        Thread.sleep(Long.MAX_VALUE);
     }
 
     private static void doUpdate(Result result) {
@@ -171,7 +175,7 @@ public class Main {
                 info("System-level locking conflict or OS interference encountered.");
             }
 
-            info(String.format("Attempt %d/%d failed. Retrying in %d ms...%n", attempt, maxRetries, sleepMillis));
+            info(String.format("Attempt %d/%d failed. Retrying in %d ms...", attempt, maxRetries, sleepMillis));
 
             try {
                 Thread.sleep(sleepMillis);

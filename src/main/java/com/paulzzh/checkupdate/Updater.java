@@ -55,7 +55,7 @@ public class Updater {
     }
 
     private Config readConfig() {
-        try (Reader reader = new InputStreamReader(new FileInputStream(CONF), StandardCharsets.UTF_8)) {
+        try (Reader reader = new InputStreamReader(Files.newInputStream(Paths.get(CONF)), StandardCharsets.UTF_8)) {
             return GSON.fromJson(reader, Config.class);
         } catch (IOException e) {
             throw new RuntimeException(e);

@@ -26,12 +26,14 @@ public class CheckUpdate implements
         //upper 1.8
         net.minecraftforge.fml.relauncher.IFMLLoadingPlugin {
     private final static Logger LOGGER = LogManager.getLogger(CheckUpdate.class.getSimpleName());
+    private final static RandomAccessFile raf;
+    private final static FileLock lock;
 
     static {
         try {
             File file = new File(LOCK_FILE);
-            RandomAccessFile raf = new RandomAccessFile(file, "rw");
-            FileLock lock = raf.getChannel().tryLock();
+            raf = new RandomAccessFile(file, "rw");
+            lock = raf.getChannel().tryLock();
             if (lock == null || !lock.isValid()) {
                 LOGGER.fatal("Cannot get lock!");
                 cpw.mods.fml.common.com.paulzzh.checkupdate.SafeRuntimeExit.exitRuntime(0);
@@ -53,12 +55,6 @@ public class CheckUpdate implements
 
                 LOGGER.fatal("Please update modpack!");
                 cpw.mods.fml.common.com.paulzzh.checkupdate.SafeRuntimeExit.exitRuntime(0);
-            } else {
-                updater = null;
-                if (lock != null) {
-                    lock.release();
-                    raf.close();
-                }
             }
         } catch (IOException | InterruptedException | URISyntaxException e) {
             throw new RuntimeException(e);

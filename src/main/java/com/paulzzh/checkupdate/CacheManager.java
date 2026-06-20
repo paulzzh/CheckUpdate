@@ -5,7 +5,10 @@ import com.paulzzh.checkupdate.gson.Config;
 import com.paulzzh.checkupdate.gson.HashSizeTime;
 import com.paulzzh.checkupdate.gson.Info;
 
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.Reader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -50,23 +53,22 @@ public class CacheManager {
             Files.write(cachePath, "{}".getBytes(StandardCharsets.UTF_8));
         }
 
-        try (Reader reader = new InputStreamReader(new FileInputStream(cachePath.toFile()), StandardCharsets.UTF_8)) {
+        try (Reader reader = new InputStreamReader(Files.newInputStream(cachePath), StandardCharsets.UTF_8)) {
             Map<String, HashSizeTime> cacheOld = GSON.fromJson(reader, new TypeToken<Map<String, HashSizeTime>>() {
             }.getType());
-            info.versions.forEach((ver, files) -> {
-                files.forEach((file, meta) -> {
-                    if (checkPath(file)) {
-                        Path path = Paths.get(file);
-                        if (Files.exists(path)) {
-                            HashSizeTime meta2 = makeCache(cacheOld, file);
-                            gameCache.put(file, meta2);
-                            gameHash.put(meta2.hash, path);
+            info.versions.forEach((ver, files) ->
+                    files.forEach((file, meta) -> {
+                        if (checkPath(file)) {
+                            Path path = Paths.get(file);
+                            if (Files.exists(path)) {
+                                HashSizeTime meta2 = makeCache(cacheOld, file);
+                                gameCache.put(file, meta2);
+                                gameHash.put(meta2.hash, path);
+                            }
+                        } else {
+                            LOGGER.info("warning: " + file);
                         }
-                    } else {
-                        LOGGER.info("warning: " + file);
-                    }
-                });
-            });
+                    }));
         } catch (IOException ignored) {
         }
 
@@ -81,7 +83,7 @@ public class CacheManager {
             Files.write(downloadCachePath, "{}".getBytes(StandardCharsets.UTF_8));
         }
 
-        try (Reader reader = new InputStreamReader(new FileInputStream(downloadCachePath.toFile()), StandardCharsets.UTF_8)) {
+        try (Reader reader = new InputStreamReader(Files.newInputStream(downloadCachePath), StandardCharsets.UTF_8)) {
             Map<String, HashSizeTime> cacheOld = GSON.fromJson(reader, new TypeToken<Map<String, HashSizeTime>>() {
             }.getType());
             walkdir(downloadBasePath, (path) -> {
@@ -163,8 +165,8 @@ public class CacheManager {
         }
     }
 
-    public Path getFile(String path, HashSizeTime meta) {
-        return getFile(path, meta, true);
+    public void getFile(String path, HashSizeTime meta) {
+        getFile(path, meta, true);
     }
 
     public Path getFile(String file, HashSizeTime meta, Boolean dl) {
