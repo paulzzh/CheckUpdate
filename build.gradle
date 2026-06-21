@@ -44,4 +44,5 @@ tasks.named('shadowJar', ShadowJar) {
     exclude 'META-INF/proguard/**'
     exclude 'META-INF/versions/**'
     relocate 'com.google', 'com.paulzzh.checkupdate.shaded.google'
+    minimize()
 }
