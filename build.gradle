@@ -39,6 +39,26 @@ jar {
     }
 }
 
+processResources {
+    inputs.property "version", project.version
+
+    filesMatching("fabric.mod.json") {
+        expand "version": project.version
+    }
+
+    filesMatching("META-INF/mods.toml") {
+        expand "version": project.version
+    }
+
+    filesMatching("META-INF/neoforge.mods.toml") {
+        expand "version": project.version
+    }
+
+    filesMatching("mcmod.info") {
+        expand "version": project.version
+    }
+}
+
 tasks.named('shadowJar', ShadowJar) {
     exclude 'META-INF/maven/**'
     exclude 'META-INF/proguard/**'
