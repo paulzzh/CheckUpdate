@@ -24,12 +24,17 @@ public class Utils {
     public final static Path LOG = HOME.resolve("CheckUpdate.log");
     public final static Path LOCK_FILE = HOME.resolve("CheckUpdate.lock");
 
-    public static boolean checkUpdate(Consumer<Object> info) throws Exception {
-        URLClassLoader loader = new URLClassLoader(new URL[]{JAR.toUri().toURL()}, CheckUpdate.class.getClassLoader());
-        Class<?> loadedClass = Class.forName("com.paulzzh.checkupdate.gui.Updater", true, loader);
+    public static boolean checkUpdate(Consumer<Object> info) {
+        try {
+            URLClassLoader loader = new URLClassLoader(new URL[]{JAR.toUri().toURL()}, CheckUpdate.class.getClassLoader());
+            Class<?> loadedClass = Class.forName("com.paulzzh.checkupdate.gui.Updater", true, loader);
 
-        Constructor<?> constructor = Arrays.stream(loadedClass.getConstructors()).findFirst().get();
-        return (boolean) loadedClass.getMethod("checkRestart").invoke(constructor.newInstance(info, null));
+            Constructor<?> constructor = Arrays.stream(loadedClass.getConstructors()).findFirst().get();
+            return (boolean) loadedClass.getMethod("checkRestart").invoke(constructor.newInstance(info, null));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return false;
     }
 
     public static String bytesToHex(byte[] hash) {

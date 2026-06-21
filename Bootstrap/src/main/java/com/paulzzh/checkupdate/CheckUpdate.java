@@ -4,8 +4,10 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.File;
+import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.channels.FileLock;
+import java.security.NoSuchAlgorithmException;
 import java.util.Map;
 
 import static com.paulzzh.checkupdate.Utils.*;
@@ -42,7 +44,7 @@ public class CheckUpdate implements
                 cpw.mods.fml.common.com.paulzzh.checkupdate.SafeRuntimeExit.exitRuntime(0);
             }
 
-        } catch (Exception e) {
+        } catch (IOException | NoSuchAlgorithmException e) {
             throw new RuntimeException(e);
         }
     }
