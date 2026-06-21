@@ -1,11 +1,12 @@
-package com.paulzzh.checkupdate;
+package com.paulzzh.checkupdate.gui;
 
 import com.google.gson.Gson;
 
-import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -18,15 +19,14 @@ import java.util.function.Consumer;
 import java.util.stream.Stream;
 
 public class Utils {
-    public final static String MOD_ID = "checkupdate";
-    public final static String MOD_PACKAGE = "com.paulzzh.checkupdate.";
-    public final static String LOCK_FILE = "CheckUpdate.lock";
-    public final static String JAR = "CheckUpdate.jar";
-    public final static String CONF = "CheckUpdate.config";
-    public final static String CACHE_DIR = "CheckUpdateCache";
-    public final static String BACKUP_DIR = "CheckUpdateBackup";
+    public final static Path HOME = getHome();
+    public final static Path CONF = Paths.get("CheckUpdate.config");
+    public final static Path LOCK_FILE = Paths.get("CheckUpdate.lock");
+
+    public final static Path CACHE_DIR = Paths.get("CheckUpdateCache");
+    public final static Path BACKUP_DIR = Paths.get("CheckUpdateBackup");
+
     public final static Gson GSON = new Gson();
-    public final static String BASE = Paths.get("").toAbsolutePath().normalize().toString();
 
     public static String bytesToHex(byte[] hash) {
         StringBuilder hexString = new StringBuilder(2 * hash.length);
@@ -40,22 +40,21 @@ public class Utils {
         return hexString.toString();
     }
 
-    public static String getSHA256(File file) throws IOException, NoSuchAlgorithmException {
-        byte[] bytes = Files.readAllBytes(file.toPath());
+    public static String getSHA256(URL resourceUrl) throws IOException, NoSuchAlgorithmException {
         MessageDigest digest = MessageDigest.getInstance("SHA-256");
-        byte[] hash = digest.digest(bytes);
+        try (InputStream is = resourceUrl.openStream()) {
+            byte[] buffer = new byte[8192];
+            int bytesRead;
+            while ((bytesRead = is.read(buffer)) != -1) {
+                digest.update(buffer, 0, bytesRead);
+            }
+        }
+        byte[] hash = digest.digest();
         return bytesToHex(hash);
     }
 
-    public static String getJava() {
-        String javaHome = System.getProperty("java.home");
-        String binaryName = System.getProperty("os.name").toLowerCase().contains("win") ? "javaw.exe" : "java";
-        File javaExec = new File(new File(javaHome, "bin"), binaryName);
-        return javaExec.getAbsolutePath();
-    }
-
     public static boolean checkPath(String file) {
-        return Paths.get(file).toAbsolutePath().normalize().startsWith(BASE);
+        return Paths.get(file).toAbsolutePath().normalize().startsWith(HOME);
     }
 
     public static void walkdir(Path path, Consumer<Path> consumer) {
@@ -114,6 +113,14 @@ public class Utils {
         } catch (Exception e) {
             return "Failed to extract stack trace";
         }
+    }
+
+    public static Path getHome() {
+        Path home = Paths.get("").toAbsolutePath().normalize();
+        if (home.getFileName().toString().equals("mods")) {
+            return home.getParent();
+        }
+        return home;
     }
 
     public static class VersionComparator implements Comparator<String> {

@@ -1,11 +1,10 @@
-package com.paulzzh.checkupdate;
+package com.paulzzh.checkupdate.gui;
 
 import com.google.gson.reflect.TypeToken;
-import com.paulzzh.checkupdate.gson.Config;
-import com.paulzzh.checkupdate.gson.HashSizeTime;
-import com.paulzzh.checkupdate.gson.Info;
+import com.paulzzh.checkupdate.gui.gson.Config;
+import com.paulzzh.checkupdate.gui.gson.HashSizeTime;
+import com.paulzzh.checkupdate.gui.gson.Info;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
@@ -20,22 +19,23 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 
-import static com.paulzzh.checkupdate.Utils.*;
+import static com.paulzzh.checkupdate.gui.Utils.*;
 
 public class CacheManager {
     private final Config config;
-    private final Updater.Logger LOGGER;
+    private final Consumer<Object> LOGGER;
     private final Info info;
     private final DownloadManager downloadManager;
     private final Map<String, HashSizeTime> gameCache = new HashMap<>();
     private final Map<String, Path> gameHash = new HashMap<>();
     private final Map<String, HashSizeTime> downloadCache = new ConcurrentHashMap<>();
-    private final Path downloadBasePath = Paths.get(CACHE_DIR, "dl");
-    private final Path infoBasePath = Paths.get(CACHE_DIR, "info");
-    private final Path downloadCachePath = Paths.get(CACHE_DIR, "dl.json");
+    private final Path downloadBasePath = CACHE_DIR.resolve("dl");
+    private final Path infoBasePath = CACHE_DIR.resolve("info");
+    private final Path downloadCachePath = CACHE_DIR.resolve("dl.json");
 
-    public CacheManager(Config config, Info info, DownloadManager downloadManager, Updater.Logger logger) throws IOException {
+    public CacheManager(Config config, Info info, DownloadManager downloadManager, Consumer<Object> logger) throws IOException {
         this.config = config;
         this.LOGGER = logger;
         this.info = info;
@@ -46,8 +46,8 @@ public class CacheManager {
     }
 
     private void flushGameCache() throws IOException {
-        Files.createDirectories(Paths.get(CACHE_DIR));
-        Path cachePath = Paths.get(CACHE_DIR, "cache.json");
+        Files.createDirectories(CACHE_DIR);
+        Path cachePath = CACHE_DIR.resolve("cache.json");
 
         if (!Files.exists(cachePath)) {
             Files.write(cachePath, "{}".getBytes(StandardCharsets.UTF_8));
@@ -66,7 +66,7 @@ public class CacheManager {
                                 gameHash.put(meta2.hash, path);
                             }
                         } else {
-                            LOGGER.info("warning: " + file);
+                            LOGGER.accept("warning: " + file);
                         }
                     }));
         } catch (IOException ignored) {
@@ -76,8 +76,7 @@ public class CacheManager {
     }
 
     private void flushDownloadCache() throws IOException {
-        Path cacheDir = Paths.get(CACHE_DIR);
-        Files.createDirectories(cacheDir);
+        Files.createDirectories(CACHE_DIR);
 
         if (!Files.exists(downloadCachePath)) {
             Files.write(downloadCachePath, "{}".getBytes(StandardCharsets.UTF_8));
@@ -90,7 +89,7 @@ public class CacheManager {
                 if (Files.isRegularFile(path)) {
                     String file = path.toString().replace("\\", "/");
                     if (file.endsWith(".!part")) {
-                        LOGGER.info("skip: " + file);
+                        LOGGER.accept("skip: " + file);
                     } else {
                         downloadCache.put(file, makeCache(cacheOld, file));
                     }
@@ -121,16 +120,16 @@ public class CacheManager {
         }
     }
 
-    private HashSizeTime makeCache(Map<String, HashSizeTime> cache, String path) {
+    private HashSizeTime makeCache(Map<String, HashSizeTime> cache, String file) {
         try {
-            BasicFileAttributes stats = Files.readAttributes(Paths.get(BASE, path), BasicFileAttributes.class);
+            BasicFileAttributes stats = Files.readAttributes(HOME.resolve(file), BasicFileAttributes.class);
             long size = stats.size();
             long time = stats.lastModifiedTime().to(TimeUnit.NANOSECONDS);
-            if (cache.containsKey(path) && cache.get(path).size == size && cache.get(path).time == time) {
-                return cache.get(path);
+            if (cache.containsKey(file) && cache.get(file).size == size && cache.get(file).time == time) {
+                return cache.get(file);
             } else {
-                LOGGER.info("modify: " + path);
-                return new HashSizeTime(getSHA256(new File(path)), size, time);
+                LOGGER.accept("modify: " + file);
+                return new HashSizeTime(getSHA256(Paths.get(file).toUri().toURL()), size, time);
             }
         } catch (IOException | NoSuchAlgorithmException e) {
             throw new RuntimeException(e);
@@ -144,7 +143,7 @@ public class CacheManager {
     public Path getInfoFile(String file) {
         try {
             HashSizeTime meta = info.info.get(file);
-            Path path = Paths.get(CACHE_DIR, "info", file);
+            Path path = CACHE_DIR.resolve("info").resolve(file);
             String dlFile = path.toString().replace("\\", "/");
             Files.createDirectories(path.getParent());
 
@@ -171,7 +170,7 @@ public class CacheManager {
 
     public Path getFile(String file, HashSizeTime meta, Boolean dl) {
         try {
-            Path path = Paths.get(CACHE_DIR, "dl", file);
+            Path path = CACHE_DIR.resolve("dl").resolve(file);
             String dlFile = path.toString().replace("\\", "/");
             Files.createDirectories(path.getParent());
 

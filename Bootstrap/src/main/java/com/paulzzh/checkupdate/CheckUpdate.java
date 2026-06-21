@@ -4,12 +4,8 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.File;
-import java.io.IOException;
 import java.io.RandomAccessFile;
-import java.net.URISyntaxException;
 import java.nio.channels.FileLock;
-import java.nio.file.Files;
-import java.nio.file.StandardCopyOption;
 import java.util.Map;
 
 import static com.paulzzh.checkupdate.Utils.*;
@@ -25,38 +21,28 @@ public class CheckUpdate implements
         cpw.mods.fml.relauncher.IFMLLoadingPlugin,
         //upper 1.8
         net.minecraftforge.fml.relauncher.IFMLLoadingPlugin {
+
     private final static Logger LOGGER = LogManager.getLogger(CheckUpdate.class.getSimpleName());
     private final static RandomAccessFile raf;
     private final static FileLock lock;
 
     static {
         try {
-            File file = new File(LOCK_FILE);
+            File file = LOCK_FILE.toFile();
             raf = new RandomAccessFile(file, "rw");
             lock = raf.getChannel().tryLock();
             if (lock == null || !lock.isValid()) {
                 LOGGER.fatal("Cannot get lock!");
                 cpw.mods.fml.common.com.paulzzh.checkupdate.SafeRuntimeExit.exitRuntime(0);
             }
-            File checkUpdateJar = new File(JAR);
-            String jarPath = CheckUpdate.class.getProtectionDomain().getCodeSource().getLocation().toURI().getPath();
-            LOGGER.info("jar: " + jarPath);
-            Files.copy(new File(jarPath).toPath(), checkUpdateJar.toPath(), StandardCopyOption.REPLACE_EXISTING);
-
-            Updater updater = new Updater(LOGGER::info, null);
-            if (updater.checkUpdate().restart) {
-                File outputFile = new File("CheckUpdate.log");
-                String[] cmd = {getJava(), "-jar", checkUpdateJar.getAbsolutePath()};
-                ProcessBuilder pb2 = new ProcessBuilder(cmd);
-                pb2.redirectOutput(outputFile);
-                pb2.redirectError(outputFile);
-                pb2.directory(new File(BASE));
-                pb2.start();
-
+            ensureJar();
+            if (checkUpdate(LOGGER::info)) {
                 LOGGER.fatal("Please update modpack!");
+                launchGUI();
                 cpw.mods.fml.common.com.paulzzh.checkupdate.SafeRuntimeExit.exitRuntime(0);
             }
-        } catch (IOException | InterruptedException | URISyntaxException e) {
+
+        } catch (Exception e) {
             throw new RuntimeException(e);
         }
     }

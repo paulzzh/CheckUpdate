@@ -1,4 +1,4 @@
-package com.paulzzh.checkupdate;
+package com.paulzzh.checkupdate.gui;
 
 import java.io.*;
 import java.net.HttpURLConnection;
@@ -12,8 +12,8 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
-import static com.paulzzh.checkupdate.Utils.bytesToHex;
-import static com.paulzzh.checkupdate.Utils.getSHA256;
+import static com.paulzzh.checkupdate.gui.Utils.bytesToHex;
+import static com.paulzzh.checkupdate.gui.Utils.getSHA256;
 
 public class DownloadManager implements Closeable {
 
@@ -146,7 +146,7 @@ public class DownloadManager implements Closeable {
             long remoteTotal = parseTotalFromContentRange(conn.getHeaderField("Content-Range"));
             if (remoteTotal > 0 && remoteTotal == existing) {
                 // 临时文件可能已经完整，直接校验 hash
-                String localHash = getSHA256(tmp);
+                String localHash = getSHA256(tmp.toURI().toURL());
                 if (!localHash.equalsIgnoreCase(task.hash)) {
                     throw new IOException("断点文件已存在，但校验失败: " + tmp.getAbsolutePath());
                 }

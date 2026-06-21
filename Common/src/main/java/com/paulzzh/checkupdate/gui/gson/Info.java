@@ -1,4 +1,4 @@
-package com.paulzzh.checkupdate.gson;
+package com.paulzzh.checkupdate.gui.gson;
 
 import java.util.Map;
 

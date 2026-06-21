@@ -1,9 +1,9 @@
-package com.paulzzh.checkupdate;
+package com.paulzzh.checkupdate.gui;
 
-import com.paulzzh.checkupdate.gson.Config;
-import com.paulzzh.checkupdate.gson.HashSizeTime;
-import com.paulzzh.checkupdate.gson.Info;
-import com.paulzzh.checkupdate.gson.Result;
+import com.paulzzh.checkupdate.gui.gson.Config;
+import com.paulzzh.checkupdate.gui.gson.HashSizeTime;
+import com.paulzzh.checkupdate.gui.gson.Info;
+import com.paulzzh.checkupdate.gui.gson.Result;
 
 import java.io.*;
 import java.net.HttpURLConnection;
@@ -23,15 +23,16 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static com.paulzzh.checkupdate.Utils.*;
+import static com.paulzzh.checkupdate.gui.Utils.*;
 
 public class Updater {
     private final DownloadManager downloadManager;
     private final CacheManager cacheManager;
-    private final Logger LOGGER;
+    private final Consumer<Object> LOGGER;
     private final Config config;
     private final Info info;
     private final int MAJOR;
@@ -39,7 +40,7 @@ public class Updater {
     private final Path icon;
     private final Path background;
 
-    public Updater(Logger logger, DownloadManager.ManagerCallback callback) throws IOException {
+    public Updater(Consumer<Object> logger, DownloadManager.ManagerCallback callback) throws IOException {
         this.LOGGER = logger;
         this.config = readConfig();
         this.downloadManager = new DownloadManager(config.thread, callback);
@@ -55,7 +56,7 @@ public class Updater {
     }
 
     private Config readConfig() {
-        try (Reader reader = new InputStreamReader(Files.newInputStream(Paths.get(CONF)), StandardCharsets.UTF_8)) {
+        try (Reader reader = new InputStreamReader(Files.newInputStream(CONF), StandardCharsets.UTF_8)) {
             Config c = GSON.fromJson(reader, Config.class);
             if (c.thread <= 0) {
                 c.thread = 8;
@@ -78,7 +79,7 @@ public class Updater {
     private Info readInfo() throws IOException {
 
         String url = config.host + URLEncoder.encode(config.name, StandardCharsets.UTF_8.name()) + "/info";
-        LOGGER.info("baseurl: " + url);
+        LOGGER.accept("baseurl: " + url);
         HttpURLConnection conn = (HttpURLConnection) new URL(url).openConnection();
         conn.setConnectTimeout(10_000);
         conn.setReadTimeout(30_000);
@@ -132,15 +133,15 @@ public class Updater {
 
     private void updateMajor(String version, Map<String, HashSizeTime> needUpdate) throws InterruptedException, IOException {
         String now = String.valueOf(Instant.now().getEpochSecond());
-        Path tempDirPath = Paths.get(CACHE_DIR, now);
+        Path tempDirPath = CACHE_DIR.resolve(now);
         walkdir(tempDirPath, Utils::deletefile);
         download(needUpdate);
         needUpdate.forEach((file, meta) -> {
             try {
                 Path dlPath = cacheManager.getFile(file, meta, false);
-                Path tempPath = Paths.get(CACHE_DIR, now, file);
+                Path tempPath = CACHE_DIR.resolve(now).resolve(file);
                 Files.createDirectories(tempPath.getParent());
-                LOGGER.info("安装文件: " + tempPath);
+                LOGGER.accept("安装文件: " + tempPath);
                 Files.move(dlPath, tempPath, StandardCopyOption.REPLACE_EXISTING);
             } catch (IOException e) {
                 throw new RuntimeException(e);
@@ -153,12 +154,12 @@ public class Updater {
                     String dirFile = tempPath.getFileName().toString();
                     Path path = Paths.get(dirFile);
                     if (Files.exists(path)) {
-                        Path backupPath = Paths.get(BACKUP_DIR, now, dirFile);
+                        Path backupPath = BACKUP_DIR.resolve(now).resolve(dirFile);
                         Files.createDirectories(backupPath.getParent());
-                        LOGGER.info("备份文件: " + backupPath);
+                        LOGGER.accept("备份文件: " + backupPath);
                         Files.move(path, backupPath, StandardCopyOption.REPLACE_EXISTING);
                     }
-                    LOGGER.info("移动文件: " + path);
+                    LOGGER.accept("移动文件: " + path);
                     Files.move(tempPath, path, StandardCopyOption.REPLACE_EXISTING);
                 } catch (IOException e) {
                     throw new RuntimeException(e);
@@ -166,9 +167,9 @@ public class Updater {
             });
         }
         config.version = version;
-        Files.write(Paths.get(CONF), GSON.toJson(config).getBytes(StandardCharsets.UTF_8));
+        Files.write(CONF, GSON.toJson(config).getBytes(StandardCharsets.UTF_8));
 
-        walkdir(Paths.get(CACHE_DIR, "dl"), Utils::deletefile);
+        walkdir(CACHE_DIR.resolve("dl"), Utils::deletefile);
         walkdir(tempDirPath, Utils::deletefile);
     }
 
@@ -179,9 +180,9 @@ public class Updater {
             try {
                 Path path = Paths.get(file);
                 if (Files.exists(path)) {
-                    Path backupPath = Paths.get(BACKUP_DIR, now, file);
+                    Path backupPath = BACKUP_DIR.resolve(now).resolve(file);
                     Files.createDirectories(backupPath.getParent());
-                    LOGGER.info("备份文件: " + backupPath);
+                    LOGGER.accept("备份文件: " + backupPath);
                     Files.move(path, backupPath, StandardCopyOption.REPLACE_EXISTING);
                 }
                 if (meta.size > 0) {
@@ -189,7 +190,7 @@ public class Updater {
                     if (dlPath == null) {
                         throw new RuntimeException("file not found");
                     }
-                    LOGGER.info("安装文件: " + dlPath);
+                    LOGGER.accept("安装文件: " + dlPath);
                     Files.move(dlPath, path, StandardCopyOption.REPLACE_EXISTING);
                 }
             } catch (IOException e) {
@@ -197,9 +198,9 @@ public class Updater {
             }
         });
         config.version = version;
-        Files.write(Paths.get(CONF), GSON.toJson(config).getBytes(StandardCharsets.UTF_8));
+        Files.write(CONF, GSON.toJson(config).getBytes(StandardCharsets.UTF_8));
 
-        walkdir(Paths.get(CACHE_DIR, "dl"), Utils::deletefile);
+        walkdir(CACHE_DIR.resolve("dl"), Utils::deletefile);
     }
 
     public void download(Map<String, HashSizeTime> needUpdate) throws InterruptedException {
@@ -212,16 +213,20 @@ public class Updater {
 
     public void setZero() throws IOException {
         config.version = "0.0";
-        Files.write(Paths.get(CONF), GSON.toJson(config).getBytes(StandardCharsets.UTF_8));
+        Files.write(CONF, GSON.toJson(config).getBytes(StandardCharsets.UTF_8));
+    }
+
+    public boolean checkRestart() throws IOException, InterruptedException {
+        return checkUpdate().restart;
     }
 
     public Result checkUpdate() throws InterruptedException, IOException {
         List<String> versions = info.versions.keySet().stream().sorted(new Utils.VersionComparator()).collect(Collectors.toList());
-        LOGGER.info("ver: " + versions);
+        LOGGER.accept("ver: " + versions);
         String latest = versions.get(versions.size() - 1);
 
         if (config.version.equals(latest)) {
-            LOGGER.info("无更新。");
+            LOGGER.accept("无更新。");
             return new Result(false, false, config.version, new HashMap<>());
         }
 
@@ -250,22 +255,22 @@ public class Updater {
                         }
                     }
                 } else {
-                    LOGGER.info("warning: " + file);
+                    LOGGER.accept("warning: " + file);
                 }
             });
             if (modUpdate.get()) {
-                LOGGER.info("检测到小版本更新");
-                LOGGER.info("mod列表改变,无法热更新,需要重启");
+                LOGGER.accept("检测到小版本更新");
+                LOGGER.accept("mod列表改变,无法热更新,需要重启");
                 return new Result(false, true, latest, needUpdate);
             } else {
-                LOGGER.info("检测到小版本更新");
+                LOGGER.accept("检测到小版本更新");
                 update(latest, needUpdate);
-                LOGGER.info("热更新完毕");
+                LOGGER.accept("热更新完毕");
                 return new Result(false, false, latest, new HashMap<>());
             }
         }
-        LOGGER.info("检测到大版本更新");
-        LOGGER.info("需要重置整合包");
+        LOGGER.accept("检测到大版本更新");
+        LOGGER.accept("需要重置整合包");
         return new Result(true, true, majorL + ".0", info.versions.get(majorL + ".0"));
     }
 
@@ -279,9 +284,5 @@ public class Updater {
 
     public Path getBackground() {
         return background;
-    }
-
-    public interface Logger {
-        void info(Object o);
     }
 }

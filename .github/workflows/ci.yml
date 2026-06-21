@@ -27,9 +27,9 @@ jobs:
       - name: Build and test
         run: ./gradlew --no-daemon clean build shadowJar
 
-      - name: Upload Shadow JAR
+      - name: Upload JAR
         uses: actions/upload-artifact@v4
         with:
-          name: shadow-jar
-          path: build/libs/*-all.jar
+          name: jar-jar
+          path: Bootstrap/build/libs/*.jar
           if-no-files-found: error

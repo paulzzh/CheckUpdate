@@ -1,11 +1,11 @@
-package com.paulzzh.checkupdate.swing;
+package com.paulzzh.checkupdate.gui.swing;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.lang.reflect.InvocationTargetException;
 
-import static com.paulzzh.checkupdate.Main.info;
+import static com.paulzzh.checkupdate.gui.Main.info;
 
 public class MainWindow extends JFrame {
     public static MainWindow INSTANCE;

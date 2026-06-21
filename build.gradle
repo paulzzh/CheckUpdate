@@ -1,68 +1,29 @@
-import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
+subprojects {
+    apply plugin: 'java-library'
 
-plugins {
-    id 'java-library'
-    id 'com.gradleup.shadow' version '8.3.11'
-}
+    group = 'com.paulzzh'
+    version = '2.0.0'
 
-
-group = 'com.paulzzh'
-version = '2.0.0'
-archivesBaseName = '!CheckUpdate'
-
-java.toolchain.languageVersion = JavaLanguageVersion.of(8)
-
-repositories {
-    maven {
-        name = "neoforged"
-        url = "https://maven.neoforged.net/releases/"
-    }
-    maven {
-        name = 'Fabric'
-        url = 'https://maven.fabricmc.net/'
-    }
-}
-
-dependencies {
-    compileOnly 'com.google.code.findbugs:jsr305:3.0.0'
-    compileOnly 'cpw.mods:modlauncher:8.1.3'
-    compileOnly 'org.apache.logging.log4j:log4j-api:2.17.1'
-    compileOnly 'net.fabricmc:fabric-loader:0.15.7'
-    implementation 'com.google.code.gson:gson:2.14.0'
-}
-
-jar {
-    manifest {
-        attributes 'FMLCorePluginContainsFMLMod': true
-        attributes 'FMLCorePlugin': 'com.paulzzh.checkupdate.CheckUpdate'
-        attributes 'Main-Class': 'com.paulzzh.checkupdate.Main'
-    }
-}
-
-processResources {
-    inputs.property "version", project.version
-
-    filesMatching("fabric.mod.json") {
-        expand "version": project.version
+    repositories {
+        maven {
+            name = "neoforged"
+            url = "https://maven.neoforged.net/releases/"
+        }
+        maven {
+            name = 'Fabric'
+            url = 'https://maven.fabricmc.net/'
+        }
     }
 
-    filesMatching("META-INF/mods.toml") {
-        expand "version": project.version
+    processResources {
+        inputs.property "version", project.version
+
+        filesMatching(['**/*.json', '**/*.toml', '**/mcmod.info']) {
+            expand "version": project.version
+        }
     }
 
-    filesMatching("META-INF/neoforge.mods.toml") {
-        expand "version": project.version
+    tasks.withType(JavaCompile).configureEach {
+        options.encoding = 'UTF-8'
     }
-
-    filesMatching("mcmod.info") {
-        expand "version": project.version
-    }
-}
-
-tasks.named('shadowJar', ShadowJar) {
-    exclude 'META-INF/maven/**'
-    exclude 'META-INF/proguard/**'
-    exclude 'META-INF/versions/**'
-    relocate 'com.google', 'com.paulzzh.checkupdate.shaded.google'
-    minimize()
 }

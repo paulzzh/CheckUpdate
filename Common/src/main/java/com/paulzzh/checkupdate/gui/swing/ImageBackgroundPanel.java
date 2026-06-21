@@ -1,4 +1,4 @@
-package com.paulzzh.checkupdate.swing;
+package com.paulzzh.checkupdate.gui.swing;
 
 import javax.swing.*;
 import java.awt.*;

@@ -1,0 +1,30 @@
+plugins {
+    id 'java-library'
+    id 'com.gradleup.shadow' version '8.3.11'
+}
+
+archivesBaseName = '!CheckUpdate'
+
+dependencies {
+    compileOnly 'com.google.code.findbugs:jsr305:3.0.0'
+    compileOnly 'cpw.mods:modlauncher:8.1.3'
+    compileOnly 'org.apache.logging.log4j:log4j-api:2.17.1'
+    compileOnly 'net.fabricmc:fabric-loader:0.15.7'
+}
+
+jar {
+    evaluationDependsOn(':Common')
+    dependsOn(":Common:shadowJar")
+
+    manifest {
+        attributes 'FMLCorePluginContainsFMLMod': true
+        attributes 'FMLCorePlugin': 'com.paulzzh.checkupdate.CheckUpdate'
+        attributes 'Main-Class': 'com.paulzzh.checkupdate.Main'
+    }
+
+    into('META-INF/jar-jar') {
+        // Bundle the runtime payload with Bridge so Bridge owns releasing the Universal jar.
+        from(project(':Common').tasks.named('shadowJar').flatMap { it.archiveFile })
+        rename { 'CheckUpdate.jar' }
+    }
+}

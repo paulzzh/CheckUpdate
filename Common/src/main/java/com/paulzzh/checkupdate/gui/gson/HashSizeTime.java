@@ -1,4 +1,4 @@
-package com.paulzzh.checkupdate.gson;
+package com.paulzzh.checkupdate.gui.gson;
 
 public class HashSizeTime {
     public final String hash;

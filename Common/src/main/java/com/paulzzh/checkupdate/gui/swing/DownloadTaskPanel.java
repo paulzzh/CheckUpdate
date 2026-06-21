@@ -1,8 +1,7 @@
-package com.paulzzh.checkupdate.swing;
+package com.paulzzh.checkupdate.gui.swing;
 
-import com.paulzzh.checkupdate.DownloadManager;
+import com.paulzzh.checkupdate.gui.DownloadManager;
 
-import javax.annotation.Nonnull;
 import javax.swing.*;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.DefaultTableCellRenderer;
@@ -71,7 +70,6 @@ public class DownloadTaskPanel extends JPanel {
         add(scrollPane, BorderLayout.CENTER);
     }
 
-    @Nonnull
     private JTableHeader getJTableHeader() {
         JTableHeader header = new JTableHeader(table.getColumnModel());
         header.setReorderingAllowed(false);

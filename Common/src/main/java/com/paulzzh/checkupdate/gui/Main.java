@@ -1,10 +1,9 @@
-package com.paulzzh.checkupdate;
+package com.paulzzh.checkupdate.gui;
 
-import com.paulzzh.checkupdate.gson.Result;
-import com.paulzzh.checkupdate.swing.LogPanel;
-import com.paulzzh.checkupdate.swing.MainWindow;
+import com.paulzzh.checkupdate.gui.gson.Result;
+import com.paulzzh.checkupdate.gui.swing.LogPanel;
+import com.paulzzh.checkupdate.gui.swing.MainWindow;
 
-import javax.annotation.Nonnull;
 import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
@@ -17,7 +16,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
-import static com.paulzzh.checkupdate.Utils.*;
+import static com.paulzzh.checkupdate.gui.Utils.*;
 
 public class Main {
 
@@ -73,7 +72,7 @@ public class Main {
             );
         });
 
-        File file = new File(LOCK_FILE);
+        File file = LOCK_FILE.toFile();
         raf = new RandomAccessFile(file, "rw");
         channel = raf.getChannel();
         lock = acquireLockWithRetry(channel, 10, 500);
@@ -121,7 +120,6 @@ public class Main {
     }
 
 
-    @Nonnull
     private static Updater getUpdater() throws IOException, InterruptedException {
         DownloadManager.ManagerCallback callback = new DownloadManager.ManagerCallback() {
             @Override
