@@ -28,4 +28,4 @@ description = "CheckUpdate"
 displayURL = "https://github.com/paulzzh/CheckUpdate"
 # A text field displayed in the mod UI
 authors = "Paulzzh"
-logoFile = "logo.png"
+logoFile = "assets/checkupdate/icon.png"
