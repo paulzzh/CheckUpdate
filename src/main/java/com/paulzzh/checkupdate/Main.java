@@ -189,8 +189,8 @@ public class Main {
     }
 
     public static void info(Object o) {
-        System.out.println(o);
-        String log = "[" + LocalDateTime.now().format(formatter) + "] " + o.toString();
+        String log = "[" + LocalDateTime.now().format(formatter) + "] " + o;
+        System.out.println(log);
         if (MainWindow.INSTANCE != null && MainWindow.INSTANCE.getLog() != null) {
             LogPanel logger = MainWindow.INSTANCE.getLog();
             String element;
