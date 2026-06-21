@@ -124,10 +124,9 @@ public class Updater {
                     update(result.version, result.filelist);
                 }
             }
+            runnable.run();
         } catch (InterruptedException | IOException e) {
             throw new RuntimeException(e);
-        } finally {
-            runnable.run();
         }
     }
 
@@ -135,11 +134,7 @@ public class Updater {
         String now = String.valueOf(Instant.now().getEpochSecond());
         Path tempDirPath = Paths.get(CACHE_DIR, now);
         walkdir(tempDirPath, Utils::deletefile);
-
-        needUpdate.entrySet().stream().filter((e) -> e.getValue().size > 0)
-                .forEach((e) -> cacheManager.getFile(e.getKey(), e.getValue()));
-        downloadManager.awaitAllFinished();
-
+        download(needUpdate);
         needUpdate.forEach((file, meta) -> {
             try {
                 Path dlPath = cacheManager.getFile(file, meta, false);
@@ -179,9 +174,7 @@ public class Updater {
 
     private void update(String version, Map<String, HashSizeTime> needUpdate) throws InterruptedException, IOException {
         String now = String.valueOf(Instant.now().getEpochSecond());
-        needUpdate.entrySet().stream().filter((e) -> e.getValue().size > 0)
-                .forEach((e) -> cacheManager.getFile(e.getKey(), e.getValue()));
-        downloadManager.awaitAllFinished();
+        download(needUpdate);
         needUpdate.forEach((file, meta) -> {
             try {
                 Path path = Paths.get(file);
@@ -207,6 +200,14 @@ public class Updater {
         Files.write(Paths.get(CONF), GSON.toJson(config).getBytes(StandardCharsets.UTF_8));
 
         walkdir(Paths.get(CACHE_DIR, "dl"), Utils::deletefile);
+    }
+
+    public void download(Map<String, HashSizeTime> needUpdate) throws InterruptedException {
+        needUpdate.entrySet().stream().filter((e) -> e.getValue().size > 0)
+                .forEach((e) -> cacheManager.getFile(e.getKey(), e.getValue()));
+        downloadManager.awaitAllFinished();
+        needUpdate.entrySet().stream().filter((e) -> e.getValue().size > 0)
+                .forEach((e) -> cacheManager.getFile(e.getKey(), e.getValue(), false));
     }
 
     public void setZero() throws IOException {

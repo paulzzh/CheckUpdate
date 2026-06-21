@@ -195,10 +195,11 @@ public class CacheManager {
                 downloadManager.submit(new DownloadManager.DownloadTask(url, path.toFile(), meta.hash,
                         config.retry, config.connectTimeout, config.readTimeout,
                         (task, hash) -> makeDownloadCache(hash, path)));
+                return null;
             }
-            return null;
+            throw new RuntimeException();
         } catch (IOException | InterruptedException e) {
-            return null;
+            throw new RuntimeException(e);
         }
     }
 }
