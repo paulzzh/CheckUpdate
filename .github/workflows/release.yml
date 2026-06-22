@@ -27,7 +27,7 @@ jobs:
         uses: gradle/actions/setup-gradle@v4
 
       - name: Build Shadow JAR
-        run: ./gradlew --no-daemon clean build shadowJar
+        run: ./gradlew --no-daemon clean build
 
       - name: Release
         uses: softprops/action-gh-release@v1

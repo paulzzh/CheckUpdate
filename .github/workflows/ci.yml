@@ -25,11 +25,11 @@ jobs:
         uses: gradle/actions/setup-gradle@v4
 
       - name: Build and test
-        run: ./gradlew --no-daemon clean build shadowJar
+        run: ./gradlew --no-daemon clean build
 
       - name: Upload JAR
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
-          name: jar-jar
           path: Bootstrap/build/libs/*.jar
+          archive: false
           if-no-files-found: error
