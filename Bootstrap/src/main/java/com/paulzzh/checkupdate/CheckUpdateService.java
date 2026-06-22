@@ -9,7 +9,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
-//Forge/NeoForged 1.13+
+//Forge 1.13+
+//NeoForged 1.13 - 1.21.8
 public class CheckUpdateService extends CheckUpdate implements ITransformationService {
     @Nonnull
     @Override

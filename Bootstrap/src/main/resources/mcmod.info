@@ -9,7 +9,6 @@
     "updateUrl": "",
     "authorList": ["Paulzzh"],
     "credits": "Mojang AB, and the Forge and FML guys.",
-    "logoFile": "assets/checkupdate/icon.png",
     "screenshots": [],
     "dependencies": []
   }

@@ -9,16 +9,19 @@ dependencies {
     compileOnly 'com.google.code.findbugs:jsr305:3.0.0'
     compileOnly 'cpw.mods:modlauncher:8.1.3'
     compileOnly 'org.apache.logging.log4j:log4j-api:2.17.1'
-    compileOnly 'net.fabricmc:fabric-loader:0.15.7'
 }
 
 jar {
     evaluationDependsOn(':Common')
     dependsOn(":Common:shadowJar")
 
+    exclude("net/minecraftforge/forgespi/**")
+    exclude("net/neoforged/**")
+    exclude("net/fabricmc/**")
+
     manifest {
         attributes 'FMLCorePluginContainsFMLMod': true
-        attributes 'FMLCorePlugin': 'com.paulzzh.checkupdate.CheckUpdate'
+        attributes 'FMLCorePlugin': 'com.paulzzh.checkupdate.CheckUpdateCore'
         attributes 'Main-Class': 'com.paulzzh.checkupdate.Main'
     }
 

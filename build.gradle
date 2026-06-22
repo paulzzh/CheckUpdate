@@ -9,10 +9,6 @@ subprojects {
             name = "neoforged"
             url = "https://maven.neoforged.net/releases/"
         }
-        maven {
-            name = 'Fabric'
-            url = 'https://maven.fabricmc.net/'
-        }
     }
 
     processResources {

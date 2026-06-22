@@ -1,4 +1,4 @@
-package cpw.mods.fml.common.com.paulzzh.checkupdate;
+package net.minecraftforge.fml.com.paulzzh.checkupdate;
 
 /** Safe runtime exit class to not trip the FML security manager. */
 public class SafeRuntimeExit {
@@ -16,11 +16,7 @@ public class SafeRuntimeExit {
     }
 
     private static void nest2(int code) {
-        try {
-            Runtime.getRuntime().exit(code);
-        } catch (Exception e) {
-            net.minecraftforge.fml.com.paulzzh.checkupdate.SafeRuntimeExit.exitRuntime(code);
-        }
+        Runtime.getRuntime().exit(code);
         throw new RuntimeException();
     }
 }

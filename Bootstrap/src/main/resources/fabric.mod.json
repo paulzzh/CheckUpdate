@@ -9,7 +9,6 @@
     "repo": "https://github.com/Paulzzh/CheckUpdate"
   },
   "license": "GPL-3.0",
-  "icon": "assets/checkupdate/icon.png",
   "environment": "client",
   "entrypoints": {
     "preLaunch": [
