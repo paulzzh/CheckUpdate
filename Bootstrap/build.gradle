@@ -3,7 +3,7 @@ plugins {
     id 'com.gradleup.shadow' version '8.3.11'
 }
 
-archivesBaseName = '!CheckUpdate'
+archivesBaseName = '+CheckUpdate'
 
 dependencies {
     compileOnly 'com.google.code.findbugs:jsr305:3.0.0'
