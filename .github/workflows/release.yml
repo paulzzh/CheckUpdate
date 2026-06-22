@@ -29,8 +29,10 @@ jobs:
       - name: Build Shadow JAR
         run: ./gradlew --no-daemon clean build
 
-      - name: Release
-        uses: softprops/action-gh-release@v1
-        with:
-          files: |
-            Bootstrap/build/libs/*.jar
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create "${GITHUB_REF_NAME}" Bootstrap/build/libs/*.jar \
+            --generate-notes \
+            --verify-tag
