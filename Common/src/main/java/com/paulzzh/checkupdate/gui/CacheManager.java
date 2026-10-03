@@ -196,7 +196,7 @@ public class CacheManager {
                         (task, hash) -> makeDownloadCache(hash, path)));
                 return null;
             }
-            throw new RuntimeException();
+            throw new RuntimeException("找不到文件: " + file);
         } catch (IOException | InterruptedException e) {
             throw new RuntimeException(e);
         }

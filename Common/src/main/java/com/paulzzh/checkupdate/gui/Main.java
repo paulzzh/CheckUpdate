@@ -102,7 +102,11 @@ public class Main {
 
         MainWindow.INSTANCE.getHead().setVersionText(updater.getConfig().version + " --> " + result.version);
         Object[] options = {"确定", "取消"};
-        int choice = JOptionPane.showOptionDialog(MainWindow.INSTANCE, "检测到小版本更新! " + result.version + "\n预计大小: " + formatBytes(size) + "\n是否更新?",
+        String msg = "检测到小版本更新! ";
+        if (result.major) {
+            msg = "检测到大版本更新! ";
+        }
+        int choice = JOptionPane.showOptionDialog(MainWindow.INSTANCE, msg + result.version + "\n预计大小: " + formatBytes(size) + "\n是否更新?",
                 "更新", JOptionPane.YES_NO_OPTION, JOptionPane.INFORMATION_MESSAGE, null, options, options[0]);
         if (choice == JOptionPane.NO_OPTION) {
             MainWindow.INSTANCE.getHead().setEnable(true);

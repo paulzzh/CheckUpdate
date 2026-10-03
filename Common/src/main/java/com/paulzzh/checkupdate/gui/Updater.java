@@ -138,11 +138,16 @@ public class Updater {
         download(needUpdate);
         needUpdate.forEach((file, meta) -> {
             try {
-                Path dlPath = cacheManager.getFile(file, meta, false);
                 Path tempPath = CACHE_DIR.resolve(now).resolve(file);
                 Files.createDirectories(tempPath.getParent());
-                LOGGER.accept("安装文件: " + tempPath);
-                Files.move(dlPath, tempPath, StandardCopyOption.REPLACE_EXISTING);
+                if (meta.size > 0) {
+                    LOGGER.accept("安装文件: " + tempPath);
+                    Path dlPath = cacheManager.getFile(file, meta, false);
+                    Files.move(dlPath, tempPath, StandardCopyOption.REPLACE_EXISTING);
+                } else if (!Files.exists(tempPath)) {
+                    LOGGER.accept("空文件: " + file);
+                    Files.createFile(tempPath);
+                }
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }

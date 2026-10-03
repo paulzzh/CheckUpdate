@@ -211,7 +211,7 @@ public class DownloadManager implements Closeable {
                         totalTimeMiles += wait;
                         lastCallbackTime = now;
                         double percent = (total > 0) ? (read * 1.0 / total) : -1;
-                        long eta = (total > 0 && totalRead > 0) ? ((total - read) / (totalRead / totalTimeMiles) / 1000) : 3601;
+                        long eta = (total > 0 && totalRead > 0) ? (totalTimeMiles * ((total - read) / totalRead) / 1000) : 3601;
                         this.callback.onProgress(task, read, total, percent, eta);
                     }
                 }
