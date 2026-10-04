@@ -184,6 +184,7 @@ public class CacheManager {
             }
 
             if (gameHash.containsKey(meta.hash) && Files.exists(gameHash.get(meta.hash))) {
+                LOGGER.accept("本地 " + path.toFile().getName() + " " + meta.hash);
                 Files.copy(gameHash.get(meta.hash), path, StandardCopyOption.REPLACE_EXISTING);
                 makeDownloadCache(meta.hash, path);
                 return path;

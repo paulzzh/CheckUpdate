@@ -184,6 +184,9 @@ public class Updater {
         needUpdate.forEach((file, meta) -> {
             try {
                 Path path = Paths.get(file);
+                if (path.getParent() != null) {
+                    Files.createDirectories(path.getParent());
+                }
                 if (Files.exists(path)) {
                     Path backupPath = BACKUP_DIR.resolve(now).resolve(file);
                     Files.createDirectories(backupPath.getParent());
