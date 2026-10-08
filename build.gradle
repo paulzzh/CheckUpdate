@@ -2,7 +2,7 @@ subprojects {
     apply plugin: 'java-library'
 
     group = 'com.paulzzh'
-    version = '2.0.2'
+    version = '2.1.0'
 
     repositories {
         maven {
@@ -14,7 +14,7 @@ subprojects {
     processResources {
         inputs.property "version", project.version
 
-        filesMatching(['**/*.json', '**/*.toml', '**/mcmod.info']) {
+        filesMatching(['**/*.properties','**/*.json', '**/*.toml', '**/mcmod.info']) {
             expand "version": project.version
         }
     }

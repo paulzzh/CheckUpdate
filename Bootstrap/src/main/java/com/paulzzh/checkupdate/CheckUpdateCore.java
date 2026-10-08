@@ -16,6 +16,10 @@ public class CheckUpdateCore extends CheckUpdate implements
         cpw.mods.fml.relauncher.IFMLLoadingPlugin,
         //upper 1.8
         net.minecraftforge.fml.relauncher.IFMLLoadingPlugin {
+    static {
+        LOGGER.info("CheckUpdateCore - LegacyForge");
+    }
+
     @Override
     public String[] getASMTransformerClass() {
         return new String[0];

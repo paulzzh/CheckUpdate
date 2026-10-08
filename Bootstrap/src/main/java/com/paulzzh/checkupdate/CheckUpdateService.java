@@ -10,8 +10,12 @@ import java.util.List;
 import java.util.Set;
 
 //Forge 1.13+
-//NeoForged 1.13 - 1.21.8
+//NeoForge 1.13 - 1.21.8
 public class CheckUpdateService extends CheckUpdate implements ITransformationService {
+    static {
+        LOGGER.info("CheckUpdateService - Forge 1.13+ / NeoForge 1.13 - 1.21.8");
+    }
+
     @Nonnull
     @Override
     public String name() {

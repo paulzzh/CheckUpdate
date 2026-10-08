@@ -10,6 +10,10 @@ import java.util.Map;
 import java.util.function.Consumer;
 
 public class CheckUpdateForge extends CheckUpdate implements IModLocator {
+    static {
+        LOGGER.info("CheckUpdateForge - ForgeSPI");
+    }
+
     @Override
     public List<?> scanMods() {
         return Collections.emptyList();

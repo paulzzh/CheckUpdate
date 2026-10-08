@@ -15,6 +15,7 @@ jar {
     evaluationDependsOn(':Common')
     dependsOn(":Common:shadowJar")
 
+    exclude("com/gtnewhorizons/**")
     exclude("net/minecraftforge/forgespi/**")
     exclude("net/neoforged/**")
     exclude("net/fabricmc/**")
