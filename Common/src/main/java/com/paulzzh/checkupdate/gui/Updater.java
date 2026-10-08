@@ -4,6 +4,7 @@ import com.paulzzh.checkupdate.gui.gson.Config;
 import com.paulzzh.checkupdate.gui.gson.HashSizeTime;
 import com.paulzzh.checkupdate.gui.gson.Info;
 import com.paulzzh.checkupdate.gui.gson.Result;
+import org.tukaani.xz.XZInputStream;
 
 import java.io.*;
 import java.net.HttpURLConnection;
@@ -78,7 +79,7 @@ public class Updater {
 
     private Info readInfo() throws IOException {
 
-        String url = config.host + URLEncoder.encode(config.name, StandardCharsets.UTF_8.name()) + "/info";
+        String url = config.host + URLEncoder.encode(config.name, StandardCharsets.UTF_8.name()) + "/info.xz";
         LOGGER.accept("baseurl: " + url);
         HttpURLConnection conn = (HttpURLConnection) new URL(url).openConnection();
         conn.setConnectTimeout(10_000);
@@ -91,7 +92,7 @@ public class Updater {
         }
         byte[] sign = Base64.getDecoder().decode(conn.getHeaderField("X-Signature"));
 
-        try (InputStream in = conn.getInputStream();
+        try (InputStream in = new XZInputStream(conn.getInputStream());
              ByteArrayOutputStream out = new ByteArrayOutputStream()) {
 
             byte[] keyBytes = Base64.getDecoder().decode(config.publicKey);

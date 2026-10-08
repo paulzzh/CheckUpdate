@@ -12,6 +12,7 @@ java {
 
 dependencies {
     implementation 'com.google.code.gson:gson:2.14.0'
+    implementation 'org.tukaani:xz:1.12'
 }
 
 jar {
@@ -25,5 +26,6 @@ tasks.named('shadowJar', ShadowJar) {
     exclude 'META-INF/proguard/**'
     exclude 'META-INF/versions/**'
     relocate 'com.google', 'com.paulzzh.checkupdate.gui.shaded.google'
+    relocate 'org.tukaani', 'com.paulzzh.checkupdate.gui.shaded.tukaani'
     minimize()
 }
