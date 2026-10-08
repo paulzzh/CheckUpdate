@@ -61,12 +61,19 @@ public class Main {
         MainWindow.INSTANCE.getHead().setFixButtonAction(() -> {
             MainWindow.INSTANCE.getHead().setEnable(false);
             runAsync(() -> {
-                        try {
-                            updater.setZero();
-                            updater = getUpdater();
-                            doUpdate(updater.checkUpdate());
-                        } catch (InterruptedException | IOException e) {
-                            throw new RuntimeException(e);
+                        Object[] options = {"确定", "取消"};
+                        int choice = JOptionPane.showOptionDialog(MainWindow.INSTANCE, "确定要重置整合包吗!\n这将导致重新下载!(真的很久!)",
+                                "检查更新 - 警告", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE, null, options, options[1]);
+                        if (choice == JOptionPane.YES_OPTION) {
+                            try {
+                                updater.setZero();
+                                updater = getUpdater();
+                                doUpdate(updater.checkUpdate());
+                            } catch (InterruptedException | IOException e) {
+                                throw new RuntimeException(e);
+                            }
+                        } else {
+                            MainWindow.INSTANCE.getHead().setEnable(true);
                         }
                     }
             );
