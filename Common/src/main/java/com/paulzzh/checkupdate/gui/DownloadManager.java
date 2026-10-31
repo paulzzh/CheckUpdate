@@ -4,6 +4,8 @@ import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Objects;
@@ -91,6 +93,45 @@ public class DownloadManager implements Closeable {
                             this.callback.onFailure(task, lastError);
                         }
                     }
+                } finally {
+                    // 再释放控制资源
+                    semaphore.release();
+                    synchronized (finishLock) {
+                        runningTasks--;
+                        if (runningTasks == 0) {
+                            finishLock.notifyAll();
+                        }
+                    }
+                }
+            });
+        } catch (RuntimeException e) {
+            semaphore.release();
+            synchronized (finishLock) {
+                runningTasks--;
+                if (runningTasks == 0) {
+                    finishLock.notifyAll();
+                }
+            }
+            throw e;
+        }
+    }
+
+    public void submit(final CopyTask task) throws InterruptedException {
+        semaphore.acquire();
+
+        synchronized (finishLock) {
+            runningTasks++;
+        }
+
+        try {
+            executor.execute(() -> {
+                try {
+                    Files.copy(task.getFromFile(), task.getDestFile(), StandardCopyOption.REPLACE_EXISTING);
+                    // 先回调
+                    if (task.callback != null) {
+                        task.callback.onSuccess(task, task.getHash());
+                    }
+                } catch (IOException ignored) {
                 } finally {
                     // 再释放控制资源
                     semaphore.release();
@@ -205,14 +246,14 @@ public class DownloadManager implements Closeable {
                 read += len;
                 totalRead += len;
 
-                if (this.callback != null) {
+                if (callback != null) {
                     long now = System.currentTimeMillis();
                     if (now - lastCallbackTime >= wait) {
                         totalTimeMiles += wait;
                         lastCallbackTime = now;
                         double percent = (total > 0) ? (read * 1.0 / total) : -1;
                         long eta = (total > 0 && totalRead > 0) ? (totalTimeMiles * ((total - read) / totalRead) / 1000) : 3601;
-                        this.callback.onProgress(task, read, total, percent, eta);
+                        callback.onProgress(task, read, total, percent, eta);
                     }
                 }
             }
@@ -227,9 +268,9 @@ public class DownloadManager implements Closeable {
             throw new IOException("下载校验失败");
         }
 
-        if (this.callback != null) {
+        if (callback != null) {
             double percent = (total > 0) ? 1.0 : -1;
-            this.callback.onProgress(task, read, total, percent, 0);
+            callback.onProgress(task, read, total, percent, 0);
         }
 
         Files.move(tmp.toPath(), target.toPath(), java.nio.file.StandardCopyOption.REPLACE_EXISTING);
@@ -310,6 +351,39 @@ public class DownloadManager implements Closeable {
 
         public int getReadTimeoutMs() {
             return readTimeoutMs;
+        }
+    }
+
+    public interface CopyCallback {
+        void onSuccess(CopyTask task, String hash);
+    }
+
+    public static class CopyTask {
+        private final Path fromFile;
+        private final Path destFile;
+        private final String hash;
+        private final CopyCallback callback;
+
+        public CopyTask(Path fromFile,
+                        Path destFile,
+                        String hash,
+                        CopyCallback callback) {
+            this.fromFile = Objects.requireNonNull(fromFile);
+            this.destFile = Objects.requireNonNull(destFile);
+            this.hash = hash;
+            this.callback = callback;
+        }
+
+        public Path getFromFile() {
+            return fromFile;
+        }
+
+        public Path getDestFile() {
+            return destFile;
+        }
+
+        public String getHash() {
+            return hash;
         }
     }
 }

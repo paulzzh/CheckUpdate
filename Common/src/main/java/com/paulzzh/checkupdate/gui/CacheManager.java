@@ -12,7 +12,6 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.security.NoSuchAlgorithmException;
 import java.util.HashMap;
@@ -128,7 +127,7 @@ public class CacheManager {
             if (cache.containsKey(file) && cache.get(file).size == size && cache.get(file).time == time) {
                 return cache.get(file);
             } else {
-                LOGGER.accept("modify: " + file);
+                // LOGGER.accept("modify: " + file);
                 return new HashSizeTime(getSHA256(Paths.get(file).toUri().toURL()), size, time);
             }
         } catch (IOException | NoSuchAlgorithmException e) {
@@ -183,14 +182,14 @@ public class CacheManager {
                 }
             }
 
-            if (gameHash.containsKey(meta.hash) && Files.exists(gameHash.get(meta.hash))) {
-                LOGGER.accept("本地 " + path.toFile().getName() + " " + meta.hash);
-                Files.copy(gameHash.get(meta.hash), path, StandardCopyOption.REPLACE_EXISTING);
-                makeDownloadCache(meta.hash, path);
-                return path;
-            }
-
             if (dl) {
+                if (gameHash.containsKey(meta.hash) && Files.exists(gameHash.get(meta.hash))) {
+                    LOGGER.accept("本地 " + path.toFile().getName() + " " + meta.hash);
+                    downloadManager.submit(new DownloadManager.CopyTask(gameHash.get(meta.hash), path, meta.hash,
+                            (task, hash) -> makeDownloadCache(hash, path)));
+                    return null;
+                }
+
                 String url = config.host + "objects/" + meta.hash;
                 downloadManager.submit(new DownloadManager.DownloadTask(url, path.toFile(), meta.hash,
                         config.retry, config.connectTimeout, config.readTimeout,
