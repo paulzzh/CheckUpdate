@@ -6,9 +6,8 @@ plugins {
 archivesBaseName = '+CheckUpdate'
 
 dependencies {
-    compileOnly 'com.google.code.findbugs:jsr305:3.0.0'
-    compileOnly 'cpw.mods:modlauncher:8.1.3'
-    compileOnly 'org.apache.logging.log4j:log4j-api:2.17.1'
+    compileOnly 'com.google.code.findbugs:jsr305:3.0.2'
+    compileOnly 'org.apache.logging.log4j:log4j-api:2.26.1'
 }
 
 jar {
@@ -16,6 +15,7 @@ jar {
     dependsOn(":Common:shadowJar")
 
     exclude("com/gtnewhorizons/**")
+    exclude("cpw/mods/modlauncher/**")
     exclude("net/minecraftforge/forgespi/**")
     exclude("net/neoforged/**")
     exclude("net/fabricmc/**")
