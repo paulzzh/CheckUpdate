@@ -114,7 +114,7 @@ public class Main {
         if (result.major) {
             msg = "检测到大版本更新! ";
         }
-        int choice = JOptionPane.showOptionDialog(MainWindow.INSTANCE, msg + result.version + "\n预计大小: " + formatBytes(size) + "\n是否更新?",
+        int choice = JOptionPane.showOptionDialog(MainWindow.INSTANCE, msg + result.version + "\n预计大小: " + formatBytes(size) + "\n共计 " + result.filelist.size() + " 个文件\n是否更新?",
                 "更新", JOptionPane.YES_NO_OPTION, JOptionPane.INFORMATION_MESSAGE, null, options, options[0]);
         if (choice == JOptionPane.NO_OPTION) {
             MainWindow.INSTANCE.getHead().setEnable(true);

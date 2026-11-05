@@ -206,6 +206,11 @@ public class DownloadManager implements Closeable {
             conn.setConnectTimeout(task.getConnectTimeoutMs());
             conn.setReadTimeout(task.getReadTimeoutMs());
             conn.setRequestProperty("Accept-Encoding", "identity");
+            code = conn.getResponseCode();
+        }
+
+        if (code >= 400) {
+            throw new IOException("HTTP 返回值不合法: " + code);
         }
 
         long total;

@@ -119,7 +119,7 @@ public class Updater {
 
     public void update(Result result, Runnable runnable) {
         try {
-            if (result.restart) {
+            if (!config.version.equals(result.version)) {
                 if (result.major) {
                     updateMajor(result.version, result.filelist);
                 } else {
@@ -234,6 +234,7 @@ public class Updater {
     }
 
     public Result checkUpdate(boolean hot) throws InterruptedException, IOException {
+        LOGGER.accept("正在检查更新...请耐心等待......");
         List<String> versions = info.versions.keySet().stream().sorted(new Utils.VersionComparator()).collect(Collectors.toList());
         LOGGER.accept("ver: " + versions);
         String latest = versions.get(versions.size() - 1);

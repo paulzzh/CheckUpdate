@@ -37,7 +37,6 @@ public class CacheManager {
         this.info = info;
         this.downloadManager = downloadManager;
 
-        flushGameCache();
         flushDownloadCache();
     }
 
@@ -123,7 +122,7 @@ public class CacheManager {
             if (cache.containsKey(file) && cache.get(file).size == size && cache.get(file).time == time) {
                 return cache.get(file);
             } else {
-                // LOGGER.accept("modify: " + file);
+                LOGGER.accept("modify: " + file);
                 return new HashSizeTime(getSHA256(Paths.get(file).toUri().toURL()), size, time);
             }
         } catch (IOException | NoSuchAlgorithmException e) {
@@ -132,6 +131,13 @@ public class CacheManager {
     }
 
     public Map<String, HashSizeTime> getGameCache() {
+        if (gameCache.isEmpty()) {
+            try {
+                flushGameCache();
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
         return gameCache;
     }
 
