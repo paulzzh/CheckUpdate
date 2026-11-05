@@ -16,8 +16,6 @@ jar {
     dependsOn(":Common:shadowJar")
 
     exclude("com/gtnewhorizons/**")
-    exclude("cpw/mods/fml/relauncher/**")
-    exclude("net/minecraftforge/fml/relauncher/**")
     exclude("net/minecraftforge/forgespi/**")
     exclude("net/neoforged/**")
     exclude("net/fabricmc/**")
