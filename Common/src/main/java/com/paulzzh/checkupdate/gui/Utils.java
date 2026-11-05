@@ -26,6 +26,11 @@ public class Utils {
     public final static Path CACHE_DIR = Paths.get("CheckUpdateCache");
     public final static Path BACKUP_DIR = Paths.get("CheckUpdateBackup");
 
+    public final static Path DL_BASE_PATH = CACHE_DIR.resolve("dl");
+    public final static Path INFO_BASE_PATH = CACHE_DIR.resolve("info");
+    public final static Path CACHE_CACHE_PATH = CACHE_DIR.resolve("cache.json");
+    public final static Path DL_CACHE_PATH = CACHE_DIR.resolve("dl.json");
+
     public final static Gson GSON = new Gson();
 
     public static String bytesToHex(byte[] hash) {

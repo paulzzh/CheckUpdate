@@ -30,9 +30,6 @@ public class CacheManager {
     private final Map<String, HashSizeTime> gameCache = new HashMap<>();
     private final Map<String, Path> gameHash = new HashMap<>();
     private final Map<String, HashSizeTime> downloadCache = new ConcurrentHashMap<>();
-    private final Path downloadBasePath = CACHE_DIR.resolve("dl");
-    private final Path infoBasePath = CACHE_DIR.resolve("info");
-    private final Path downloadCachePath = CACHE_DIR.resolve("dl.json");
 
     public CacheManager(Config config, Info info, DownloadManager downloadManager, Consumer<Object> logger) throws IOException {
         this.config = config;
@@ -46,13 +43,12 @@ public class CacheManager {
 
     private void flushGameCache() throws IOException {
         Files.createDirectories(CACHE_DIR);
-        Path cachePath = CACHE_DIR.resolve("cache.json");
 
-        if (!Files.exists(cachePath)) {
-            Files.write(cachePath, "{}".getBytes(StandardCharsets.UTF_8));
+        if (!Files.exists(CACHE_CACHE_PATH)) {
+            Files.write(CACHE_CACHE_PATH, "{}".getBytes(StandardCharsets.UTF_8));
         }
 
-        try (Reader reader = new InputStreamReader(Files.newInputStream(cachePath), StandardCharsets.UTF_8)) {
+        try (Reader reader = new InputStreamReader(Files.newInputStream(CACHE_CACHE_PATH), StandardCharsets.UTF_8)) {
             Map<String, HashSizeTime> cacheOld = GSON.fromJson(reader, new TypeToken<Map<String, HashSizeTime>>() {
             }.getType());
             info.versions.forEach((ver, files) ->
@@ -71,20 +67,20 @@ public class CacheManager {
         } catch (IOException ignored) {
         }
 
-        Files.write(cachePath, GSON.toJson(gameCache).getBytes(StandardCharsets.UTF_8));
+        Files.write(CACHE_CACHE_PATH, GSON.toJson(gameCache).getBytes(StandardCharsets.UTF_8));
     }
 
     private void flushDownloadCache() throws IOException {
         Files.createDirectories(CACHE_DIR);
 
-        if (!Files.exists(downloadCachePath)) {
-            Files.write(downloadCachePath, "{}".getBytes(StandardCharsets.UTF_8));
+        if (!Files.exists(DL_CACHE_PATH)) {
+            Files.write(DL_CACHE_PATH, "{}".getBytes(StandardCharsets.UTF_8));
         }
 
-        try (Reader reader = new InputStreamReader(Files.newInputStream(downloadCachePath), StandardCharsets.UTF_8)) {
+        try (Reader reader = new InputStreamReader(Files.newInputStream(DL_CACHE_PATH), StandardCharsets.UTF_8)) {
             Map<String, HashSizeTime> cacheOld = GSON.fromJson(reader, new TypeToken<Map<String, HashSizeTime>>() {
             }.getType());
-            walkdir(downloadBasePath, (path) -> {
+            walkdir(DL_BASE_PATH, (path) -> {
                 if (Files.isRegularFile(path)) {
                     String file = path.toString().replace("\\", "/");
                     if (file.endsWith(".!part")) {
@@ -94,7 +90,7 @@ public class CacheManager {
                     }
                 }
             });
-            walkdir(infoBasePath, (path) -> {
+            walkdir(INFO_BASE_PATH, (path) -> {
                 if (Files.isRegularFile(path)) {
                     String file = path.toString().replace("\\", "/");
                     downloadCache.put(file, makeCache(cacheOld, file));
@@ -103,7 +99,7 @@ public class CacheManager {
         } catch (IOException ignored) {
         }
 
-        Files.write(downloadCachePath, GSON.toJson(downloadCache).getBytes(StandardCharsets.UTF_8));
+        Files.write(DL_CACHE_PATH, GSON.toJson(downloadCache).getBytes(StandardCharsets.UTF_8));
     }
 
     private void makeDownloadCache(String hash, Path path) {
@@ -113,7 +109,7 @@ public class CacheManager {
             long size = stats.size();
             long time = stats.lastModifiedTime().to(TimeUnit.NANOSECONDS);
             downloadCache.put(dlFile, new HashSizeTime(hash, size, time));
-            Files.write(downloadCachePath, GSON.toJson(downloadCache).getBytes(StandardCharsets.UTF_8));
+            Files.write(DL_CACHE_PATH, GSON.toJson(downloadCache).getBytes(StandardCharsets.UTF_8));
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -142,7 +138,7 @@ public class CacheManager {
     public Path getInfoFile(String file) {
         try {
             HashSizeTime meta = info.info.get(file);
-            Path path = CACHE_DIR.resolve("info").resolve(file);
+            Path path = INFO_BASE_PATH.resolve(file);
             String dlFile = path.toString().replace("\\", "/");
             Files.createDirectories(path.getParent());
 
@@ -169,7 +165,7 @@ public class CacheManager {
 
     public Path getFile(String file, HashSizeTime meta, Boolean dl) {
         try {
-            Path path = CACHE_DIR.resolve("dl").resolve(file);
+            Path path = DL_BASE_PATH.resolve(file);
             String dlFile = path.toString().replace("\\", "/");
             Files.createDirectories(path.getParent());
 

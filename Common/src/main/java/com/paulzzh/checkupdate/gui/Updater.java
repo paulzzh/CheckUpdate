@@ -139,7 +139,7 @@ public class Updater {
         download(needUpdate);
         needUpdate.forEach((file, meta) -> {
             try {
-                Path tempPath = CACHE_DIR.resolve(now).resolve(file);
+                Path tempPath = tempDirPath.resolve(file);
                 Files.createDirectories(tempPath.getParent());
                 if (meta.size > 0) {
                     LOGGER.accept("安装文件: " + tempPath);
@@ -175,7 +175,7 @@ public class Updater {
         config.version = version;
         Files.write(CONF, GSON.toJson(config).getBytes(StandardCharsets.UTF_8));
 
-        walkdir(CACHE_DIR.resolve("dl"), Utils::deletefile);
+        walkdir(DL_BASE_PATH, Utils::deletefile);
         walkdir(tempDirPath, Utils::deletefile);
     }
 
@@ -209,7 +209,7 @@ public class Updater {
         config.version = version;
         Files.write(CONF, GSON.toJson(config).getBytes(StandardCharsets.UTF_8));
 
-        walkdir(CACHE_DIR.resolve("dl"), Utils::deletefile);
+        walkdir(DL_BASE_PATH, Utils::deletefile);
     }
 
     public void download(Map<String, HashSizeTime> needUpdate) throws InterruptedException {
