@@ -101,13 +101,14 @@ public class Main {
     private static void doUpdate(Result result) {
         MainWindow.INSTANCE.getHead().setEnable(false);
         long size = result.filelist.values().stream().mapToLong((m) -> m.size).sum();
-        if (!result.restart) {
-            MainWindow.INSTANCE.getHead().setVersionText(updater.getConfig().version);
+        String currentVersion = updater.getConfig().version;
+        if (currentVersion.equals(result.version)) {
+            MainWindow.INSTANCE.getHead().setVersionText(currentVersion);
             MainWindow.INSTANCE.getHead().setEnable(true);
             return;
         }
 
-        MainWindow.INSTANCE.getHead().setVersionText(updater.getConfig().version + " --> " + result.version);
+        MainWindow.INSTANCE.getHead().setVersionText(currentVersion + " --> " + result.version);
         Object[] options = {"确定", "取消"};
         String msg = "检测到小版本更新! ";
         if (result.major) {

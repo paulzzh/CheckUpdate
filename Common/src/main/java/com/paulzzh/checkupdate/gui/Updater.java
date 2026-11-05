@@ -226,10 +226,14 @@ public class Updater {
     }
 
     public boolean checkRestart() throws IOException, InterruptedException {
-        return checkUpdate().restart;
+        return checkUpdate(true).restart;
     }
 
     public Result checkUpdate() throws InterruptedException, IOException {
+        return checkUpdate(false);
+    }
+
+    public Result checkUpdate(boolean hot) throws InterruptedException, IOException {
         List<String> versions = info.versions.keySet().stream().sorted(new Utils.VersionComparator()).collect(Collectors.toList());
         LOGGER.accept("ver: " + versions);
         String latest = versions.get(versions.size() - 1);
@@ -273,9 +277,13 @@ public class Updater {
                 return new Result(false, true, latest, needUpdate);
             } else {
                 LOGGER.accept("检测到小版本更新");
-                update(latest, needUpdate);
-                LOGGER.accept("热更新完毕");
-                return new Result(false, false, latest, new HashMap<>());
+                if (hot) {
+                    update(latest, needUpdate);
+                    LOGGER.accept("热更新完毕");
+                    return new Result(false, false, latest, new HashMap<>());
+                } else {
+                    return new Result(false, false, latest, needUpdate);
+                }
             }
         }
         LOGGER.accept("检测到大版本更新");
